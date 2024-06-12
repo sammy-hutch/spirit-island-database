@@ -56,6 +56,9 @@ Optional setup includes:
 
 - In Ubuntu, run ```code .``` to open VS Code
 - Open the terminal: Command bar > Terminal > Open new terminal and use this terminal for the following steps
+- add your username and email to git config with the following commands:
+  - ```git config --global user.name "Your Name"```
+  - ```git config --global user.email "youremail@yourdomain.com"```
 - Starting from step 2, follow the steps described [here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent#generating-a-new-ssh-key)
 - Run ```cat < ~/.ssh/id_ed25519.pub``` and copy the result
 - Go to [https://github.com/settings/keys](https://github.com/settings/keys) and Click on "New SSH key"
