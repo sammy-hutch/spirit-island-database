@@ -19,15 +19,11 @@ ddl_function_tenses = {
     "drop": {
         "present": "dropping",
         "past": "dropped"
+    },
+    "load": {
+        "present": "loading",
+        "past": "loaded"
     }
 }
 
-accepted_processes = ["build", "drop"]
-
-state = "build"
-
-if __name__ == "__main__":
-    print(ddl_function_tenses)
-    print(ddl_function_tenses[state])
-    print(ddl_function_tenses[state]["present"])
-    exit()
+accepted_processes = ["build", "drop", "load"]

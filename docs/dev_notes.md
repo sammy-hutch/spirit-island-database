@@ -9,9 +9,10 @@ components:
 [X] function which runs DDL commands against database
 [ ] files where SQL scripts are built
 [ ] seed files to build static dimension tables
-[ ] process (API?) to pull data (at least fact tables) from google sheets
+[X] process (API?) to pull data (at least fact tables) from google sheets
 [ ] function where user defines which scripts they want to process, and how they want to process them (build, drop, etc)
 [ ] function to compile and order chosen SQL scripts, ready for input into DDL runner
+[ ] tags for types of tables (e.g. source, seed, models) (and yaml file) so tables can be handled in batches
 
 
 
