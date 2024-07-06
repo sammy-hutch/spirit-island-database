@@ -7,9 +7,13 @@ scripts = {
         "things": "CREATE TABLE IF NOT EXISTS things (id INTEGER PRIMARY KEY, thing_name text NOT NULL)"
     },
     "drop": {
-        "items": "DROP TABLE IF EXISTS items;",
-        "objects": "DROP TABLE IF EXISTS objects;"
+        "adversaries_dim": "DROP TABLE IF EXISTS adversaries_dim",
+        "aspects_dim": "DROP TABLE IF EXISTS aspects_dim",
+        "events_fact": "DROP TABLE IF EXISTS events_fact",
+        "games_fact": "DROP TABLE IF EXISTS games_fact",
+        "scenarios_dim": "DROP TABLE IF EXISTS scenarios_dim",
+        "spirits_dim": "DROP TABLE IF EXISTS spirits_dim"
     }
 }
 
-process = "load"
+process = "build"

@@ -10,7 +10,7 @@ from helpers.helpers_temp import process
 from pandas import DataFrame
 
 def ddl_runner(scripts, process):
-    ## for processing SQL scripts
+    ## performs SQL scripts against db
     ## accepts 
     ##   scripts: a dictionary of table names (keys) and SQL DDL statements (values)
     ##   process: the type of scripts to be executed ("build","drop")
@@ -21,12 +21,6 @@ def ddl_runner(scripts, process):
             past_action = ddl_function_tenses[process]["past"]
             scripts = scripts[process]
             count = len(scripts)
-            print(f"Tables to {process}: {count}")
-            if process == "drop":
-                response = input(f"{bcolors.WARNING}You are about to drop {count} tables - do you want to continue? [y/n] {bcolors.ENDC}")
-                if response != "y":
-                    print("Aborting...")
-                    exit()
             cur = conn.cursor()
             for script in scripts:
                 try:
@@ -41,16 +35,14 @@ def ddl_runner(scripts, process):
         print(f"{bcolors.FAIL}Error with process ddl_runner: {e}{bcolors.ENDC}")
 
 def df_to_sql_table(df_dict):
-    ## for processing pandas dataframes
+    ## writes data from pandas df to db
     ## accepts
     ##   df_dict: a dictionary of table names (keys) and dataframes of the table data (values)
     try:
-        present_action = ddl_function_tenses[process]["present"]
-        past_action = ddl_function_tenses[process]["past"]
-        count = len(df_dict)
-
-        # write data to db
         with sqlite3.connect(database) as conn:
+            present_action = ddl_function_tenses[process]["present"]
+            past_action = ddl_function_tenses[process]["past"]
+            count = len(df_dict)
             for table in df_dict:
                 df = DataFrame(df_dict[table])
                 try:
@@ -60,18 +52,15 @@ def df_to_sql_table(df_dict):
                     print(f"{bcolors.FAIL}Error with {present_action} table {table}: {e}{bcolors.ENDC}")
                     count -= 1
             conn.commit()
-            print(f"Finished {present_action} {count} tables")
-            
+            print(f"Finished {present_action} {count} tables")            
     except sqlite3.Error as e:
         print(f"{bcolors.FAIL}Error with process df_to_sql_table: {e}{bcolors.ENDC}")
-        # TODO: improve error so not sqlite dependent
 
 def db_table_list():
     # queries db meta to return list of tables
     try:
         with sqlite3.connect(database) as conn:
             cur = conn.cursor()
-            # TODO: wrap execution in try block
             cur.execute("SELECT name FROM sqlite_schema WHERE type = 'table';")
             result = cur.fetchall()
             tables = []
