@@ -12,13 +12,13 @@ Tools currently in development:
 | Name | Function | Softwares |
 | ---- | -------- | --------- |
 | Analytical modelling tool (am_tool) | Transformation layer to convert raw data into analytical datasets | Python and SQLite |
+| Data import tool (di_tool) | Selection of import services to write data into database, e.g. from Google Sheets or local excel file | Python, ?? |
 
 
 Tools scoped for future development:
 | Name | Function | Softwares |
 | ---- | -------- | --------- |
 | Entry Form tool (ef_tool) | Data input form | Javascript and HTML |
-| Data import tool (di_tool) | Selection of import services to write data into database, e.g. from Google Sheets or local excel file | Python, ?? |
 | Data export tool (de_tool) | Selection of export services to export data from the database/virtual machine environment, e.g. export to Google Sheets or local excel file | Python, ?? |
 
 

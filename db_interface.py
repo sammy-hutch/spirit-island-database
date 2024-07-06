@@ -1,9 +1,13 @@
-# set of commands for interfacing with the database, e.g. to build tables
+# set of functions for interfacing with the database, e.g. to build tables
+# each function is designed to accept a dict/list of related DB processes to be performed
+#   this way, each function only needs to be run once, 
+#   so db connection only needs to be established (and closed) once
 
 import sqlite3
 from env_vars import database
 from helpers import bcolors, ddl_function_tenses
 from helpers_temp import process
+from utils import data_drop_check
 from pandas import DataFrame
 
 def ddl_runner(scripts, process):
@@ -35,20 +39,47 @@ def ddl_runner(scripts, process):
             conn.commit()
             print(f"Finished {present_action} {count} tables")
     except sqlite3.Error as e:
-        print(f"{bcolors.FAIL}Error with process: {e}{bcolors.ENDC}")
+        print(f"{bcolors.FAIL}Error with process ddl_runner: {e}{bcolors.ENDC}")
 
-def df_to_sql_table(df, table_name):
+def df_to_sql_table(df_dict):
     ## for processing pandas dataframes
     ## accepts
-    ##   df: a dataframe, to be loaded into a table
-    ##   table_name: the name of the table to be made from the dataframe
+    ##   df_dict: a dictionary of table names (keys) and dataframes of the table data (values)
+    try:
+        present_action = ddl_function_tenses[process]["present"]
+        past_action = ddl_function_tenses[process]["past"]
+        count = len(df_dict)
+
+        # write data to db
+        with sqlite3.connect(database) as conn:
+            for table in df_dict:
+                df = DataFrame(df_dict[table])
+                try:
+                    df.to_sql(name=table, con=conn, if_exists='replace')
+                    print(f"{bcolors.OKGREEN}Successfully {past_action} table {table}{bcolors.ENDC}")
+                except sqlite3.Error as e:
+                    print(f"{bcolors.FAIL}Error with {present_action} table {table}: {e}{bcolors.ENDC}")
+                    count -= 1
+            conn.commit()
+            print(f"Finished {present_action} {count} tables")
+            
+    except sqlite3.Error as e:
+        print(f"{bcolors.FAIL}Error with process df_to_sql_table: {e}{bcolors.ENDC}")
+        # TODO: improve error so not sqlite dependent
+
+def db_table_list():
+    # queries db meta to return list of tables
     try:
         with sqlite3.connect(database) as conn:
-            # present_action = ddl_function_tenses[process]["present"]
-            past_action = ddl_function_tenses[process]["past"]
-            df = DataFrame(df)
-            df.to_sql(name=table_name, con=conn, if_exists='replace')
-            print(f"{bcolors.OKGREEN}Successfully {past_action} table {table_name}{bcolors.ENDC}")
+            cur = conn.cursor()
+            # TODO: wrap execution in try block
+            cur.execute("SELECT name FROM sqlite_schema WHERE type = 'table';")
+            result = cur.fetchall()
+            tables = []
+            for row in result:
+                row = row[0]
+                tables.append(row)
+            conn.commit()
+            return tables
     except sqlite3.Error as e:
-        print(f"{bcolors.FAIL}Error with process: {e}{bcolors.ENDC}")
-    # TODO: add warning message if overwriting table, add warning if schema has changed, add counters for failures
+        print(f"{bcolors.FAIL}Error with process db_table_list: {e}{bcolors.ENDC}")
