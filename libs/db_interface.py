@@ -5,9 +5,8 @@
 
 import sqlite3
 from env_vars import database
-from helpers import bcolors, ddl_function_tenses
-from helpers_temp import process
-from utils import data_drop_check
+from helpers.helpers import bcolors, ddl_function_tenses
+from helpers.helpers_temp import process
 from pandas import DataFrame
 
 def ddl_runner(scripts, process):

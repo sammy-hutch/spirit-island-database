@@ -1,6 +1,6 @@
 # utility functions
-from helpers import bcolors
-from db_interface import db_table_list
+from helpers.helpers import bcolors
+from libs.db_interface import db_table_list
 
 def data_drop_check(new_data, process):
     # function to get confirmation from user if new data would overwrite current data

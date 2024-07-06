@@ -1,9 +1,9 @@
 # handlers define processes, i.e. sequences of functions
-from helpers import bcolors
-from helpers_temp import scripts
-from db_interface import df_to_sql_table, ddl_runner
-from data_transfer import read_data_from_google_sheets
-from utils import data_drop_check
+from helpers.helpers import bcolors
+from helpers.helpers_temp import scripts
+from libs.db_interface import df_to_sql_table, ddl_runner
+from libs.data_transfer import read_data_from_google_sheets
+from libs.utils import data_drop_check
 
 def load_data_from_gsheets(process):
     # process to read data from google sheets and load it into db
