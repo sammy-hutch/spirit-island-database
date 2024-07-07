@@ -23,3 +23,5 @@ def data_drop_check(new_data, process):
         if process == "drop":
             print("No tables to drop, exiting process")
             return False
+        else:
+            return True
