@@ -11,6 +11,8 @@ def load_data_from_gsheets(process):
     try:
         # 1. pull data from gsheets
         df_dict = read_data_from_google_sheets()
+        if not df_dict:
+            return False
 
         # 2. check if db data will be overwritten
         if not data_drop_check(df_dict, process):

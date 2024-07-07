@@ -16,4 +16,4 @@ scripts = {
     }
 }
 
-process = "build"
+process = "load"

@@ -8,11 +8,14 @@ def read_data_from_google_sheets():
     try:
         df_dict = {}
         for sheet in gsheets:
-            # TODO: add try block & error handling
-            url = gsheets[sheet]
-            new_url = url.replace("/edit?gid=", "/export?format=csv&gid=")
-            df = pd.read_csv(new_url)
-            df_dict[sheet] = df
+            try:
+                url = gsheets[sheet]
+                new_url = url.replace("/edit?gid=", "/export?format=csv&gid=")
+                df = pd.read_csv(new_url)
+                df_dict[sheet] = df
+            except:
+                print(f"{bcolors.FAIL}Error reading from external table '{sheet}'{bcolors.ENDC}")
+                return False
         return df_dict
     except:
         print(f"{bcolors.FAIL}Error in data_transfer process 'read_data_from_google_sheets'{bcolors.ENDC}")
