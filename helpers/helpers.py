@@ -14,15 +14,18 @@ class bcolors:
 ddl_function_tenses = {
     "build": {
         "present": "building",
-        "past": "built"
+        "past": "built",
+        "subprocess": "overwrite"
     },
     "drop": {
         "present": "dropping",
-        "past": "dropped"
+        "past": "dropped",
+        "subprocess": "drop"
     },
     "load": {
         "present": "loading",
-        "past": "loaded"
+        "past": "loaded",
+        "subprocess": "overwrite"
     }
 }
 
