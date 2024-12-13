@@ -4,6 +4,7 @@
 #   so db connection only needs to be established (and closed) once
 
 import sqlite3
+import csv
 from env_vars import database
 from helpers.helpers import bcolors, ddl_function_tenses
 from helpers.helpers_temp import process
@@ -71,3 +72,49 @@ def db_table_list():
             return tables
     except sqlite3.Error as e:
         print(f"{bcolors.FAIL}Error with process db_table_list: {e}{bcolors.ENDC}")
+
+def export_table_to_csv(db_path, table_name, csv_file_path):
+    """
+    Export a table from an SQLite database to a CSV file.
+
+    Parameters:
+    db_path (str): The path to the SQLite database file.
+    table_name (str): The name of the table to be exported.
+    csv_file_path (str): The path to the output CSV file.
+    """
+    # Connect to the SQLite database
+    connection = sqlite3.connect(db_path)
+    
+    # Create cursor object to execute SQL queries
+    cursor = connection.cursor()
+
+    # Execute a query to select all data from the table
+    cursor.execute(f"SELECT * FROM {table_name}")
+    
+    # Fetch all rows of the query result
+    rows = cursor.fetchall()
+    
+    # Get column headers using cursor description
+    column_headers = [description[0] for description in cursor.description]
+    
+    # Open the CSV file for writing
+    with open(csv_file_path, 'w', newline='', encoding='utf-8') as csv_file:
+        # Create a CSV writer object
+        csv_writer = csv.writer(csv_file)
+        
+        # Write the column headers to the CSV file
+        csv_writer.writerow(column_headers)
+        
+        # Write the rows of data to the CSV file
+        for row in rows:
+            csv_writer.writerow(row)
+    
+    # Close the cursor and the database connection
+    cursor.close()
+    connection.close()
+    
+    print(f"Table '{table_name}' has been exported to {csv_file_path}")
+
+# Example usage:
+# export_table_to_csv('database.sqlite', 'my_table', 'my_table.csv')
+
