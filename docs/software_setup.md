@@ -108,13 +108,13 @@ fi
 It is good practice to setup an environment for each project you work on.
 To setup a Virtual environment, follow the commands on [Conda](https://docs.conda.io/en/latest/)
 
-- Run ```conda create -n spirit-island-database python=3.8```. You can substitute *prio* with a name of your preference.
+- Run ```conda create -n spirit-island-database python=3.8```. You can substitute *spirit-island-database* with a name of your preference.
 - Run ```conda activate spirit-island-database```
 - You should now see *spirit-island-database* at the beginning of your terminal command line.  
   (**Important note:** Always run ```conda activate <env_name>``` whenever you restart the terminal to select the environment related to the project you're working on).
 - the following packages are required:
   - pandas: ```conda install pandas```
-  - python-dotenv: ```conda install pandas```
+  - python-dotenv: ```conda install python-dotenv```
 
 ## Install DB Browser for SQLite
 

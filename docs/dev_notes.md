@@ -7,6 +7,7 @@ to do this, i need a function that can take sql files and extract the text to po
 
 components:
 [X] function which runs DDL commands against database
+[ ] set up jinja
 [ ] files where SQL scripts are built
 [ ] seed files to build static dimension tables & store 'data' (accolade dscriptions and calculations)
 [X] process (API?) to pull data (at least fact tables) from google sheets
