@@ -1,0 +1,50 @@
+version: 2
+
+sources:
+  - name: main
+
+    tables:
+      - name: adversaries_dim
+        columns:
+          - name: adversary_id
+            tests:
+              - unique
+              - not_null
+      
+      - name: aspects_dim
+        columns:
+          - name: aspect_id
+            tests:
+              - unique
+              - not_null
+      
+      - name: events_fact
+        columns:
+          - name: event_id
+            tests:
+              - unique
+              - not_null
+          - name: game_id
+            tests:
+              - not_null
+      
+      - name: games_fact
+        columns:
+          - name: game_id
+            tests:
+              - unique
+              - not_null
+      
+      - name: scenarios_dim
+        columns:
+          - name: scenario_id
+            tests:
+              - unique
+              - not_null
+      
+      - name: spirits_dim
+        columns:
+          - name: spirit_id
+            tests:
+              - unique
+              - not_null
