@@ -45,3 +45,7 @@ Accolades
 | spirit | i won.. but at what cost? | lowest average score in wins |
 | spirit | mvp | highest avg score in wins |
 | spirit | drama queen | lowest average score in losses |
+| spirit | great when it happens | lowest win-rate : win-score ratio |
+| spirit | ?? | highest win-rate : win-score ratio |
+| spirit | ?? | highest loss-rate : loss-score ratio |
+| spirit | ?? | lowest loss-rate : loss-score ratio |
