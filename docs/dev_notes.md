@@ -41,11 +41,13 @@ Accolades
 | | spirit | clean freak | lowest avg blight on island at endgame |
 | | spirit | got places to be | highest average cards in deck at endgame (in wins) |
 | | spirit | no rush | lowest average cards in deck at endgame (in wins) | 
-| | spirit | it could have been glorious | highest average score in losses |
-| | spirit | i won.. but at what cost? | lowest average score in wins |
-| | spirit | mvp | highest avg score in wins |
-| | spirit | drama queen | lowest average score in losses |
+|X| spirit | it could have been glorious | highest average score in losses |
+|X| spirit | i won.. but at what cost? | lowest average score in wins |
+|X| spirit | mvp | highest avg score in wins |
+|X| spirit | drama queen | lowest average score in losses |
 | | spirit | great when it happens | lowest win-rate : win-score ratio |
 | | spirit | ?? | highest win-rate : win-score ratio |
 | | spirit | ?? | highest loss-rate : loss-score ratio |
 | | spirit | ?? | lowest loss-rate : loss-score ratio |
+| | spirit | better off alone | highest ratio of solo score to multi-spirit score |
+| | spirit | team player | highest ratio of multi-spirit score to solo score |
