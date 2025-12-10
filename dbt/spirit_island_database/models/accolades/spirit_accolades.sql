@@ -18,7 +18,9 @@ spirit_game_data_agg AS (
         spirit_name,
         AVG(game_score) AS avg_game_score,
         AVG(IIF(game_win = 10, game_score, null)) AS avg_win_score,
-        AVG(IIF(game_win = 0, game_score, null)) AS avg_loss_score
+        AVG(IIF(game_win = 0, game_score, null)) AS avg_loss_score,
+        (SUM(game_win)/10)/COUNT(*) AS win_rate,
+        1-(SUM(game_win)/10)/COUNT(*) AS loss_rate
     from spirit_game_data_raw
     group by spirit_name
 ),
@@ -86,6 +88,28 @@ bawc AS (
         spirit_name
     from spirit_game_data_agg
     where avg_win_score = (SELECT MIN(avg_win_score) FROM spirit_game_data_agg)
+    order by spirit_name
+    limit 1
+),
+wh AS (
+    select
+        '007' AS accolade_id,
+        'Working Hard' AS accolade_name,
+        'highest win rate' AS accolade_description,
+        spirit_name
+    from spirit_game_data_agg
+    where win_rate = (SELECT MAX(win_rate) FROM spirit_game_data_agg)
+    order by spirit_name
+    limit 1
+),
+hw AS (
+    select
+        '008' AS accolade_id,
+        'Hardly Working' AS accolade_name,
+        'lowest win rate' AS accolade_description,
+        spirit_name
+    from spirit_game_data_agg
+    where win_rate = (SELECT MIN(win_rate) FROM spirit_game_data_agg)
     order by spirit_name
     limit 1
 )
