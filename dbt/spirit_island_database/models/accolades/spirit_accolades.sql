@@ -1,3 +1,8 @@
+{% set accolades = load_seed('accolades') %}
+{% for accolade in accolades %}
+    '{{accolade}}'
+{% endfor %}
+
 WITH 
 spirit_game_data_raw AS (
     select distinct
