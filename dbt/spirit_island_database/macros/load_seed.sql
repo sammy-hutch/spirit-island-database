@@ -4,6 +4,8 @@
     SELECT * FROM {{ seed_file }}
   {% endset %}
 
-  {% do run_query(query) %}
+  {% set results = run_query(query) %}
+
+  {{ return(results) }}
 
 {% endmacro %}

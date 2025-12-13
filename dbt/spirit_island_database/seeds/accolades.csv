@@ -1,1 +1,3 @@
 id,abbreviation,name,description,type,condition
+"001",stb,Simply the Best,highest average score,spirit,avg_game_score = (SELECT MAX(avg_game_score) FROM spirit_game_data_agg)
+"002",wip,WIP,lowest average score,spirit,avg_game_score = (SELECT MIN(avg_game_score) FROM spirit_game_data_agg)

@@ -1,6 +1,10 @@
 {% set accolades = load_seed('accolades') %}
 {% for accolade in accolades %}
-    '{{accolade}}'
+    '{{accolade.id}} AS id'
+    '{{accolade.abbreviation}} AS abreviation'
+    '{{accolade.name}} AS name'
+    '{{accolade['type']}} AS type'
+    '{{accolade['condition']}} AS condition'
 {% endfor %}
 
 WITH 
@@ -29,6 +33,18 @@ spirit_game_data_agg AS (
     from spirit_game_data_raw
     group by spirit_name
 ),
+
+--start of accolade macro loop
+
+{% for accolade in accolades %}
+    {{ accolade_cte(accolade) }}
+
+    {% if not loop.last %}
+    ,
+    {% endif %}
+{% endfor %}
+
+-- end of accolade macro loop
 
 stb AS (
     select
