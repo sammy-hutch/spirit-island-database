@@ -35,8 +35,11 @@ spirit_game_data_agg AS (
         AVG(IIF(game_win = 10, game_score, null)) AS avg_win_score,
         AVG(IIF(game_win = 0, game_score, null)) AS avg_loss_score,
 
-        (SUM(game_win)/10)*1.0/COUNT(*) AS win_rate,
-        1-(SUM(game_win)/10)*1.0/COUNT(*) AS loss_rate,
+        ROUND((SUM(game_win)/10)*1.0/COUNT(*), 2) AS win_rate,
+        ROUND(1-(SUM(game_win)/10)*1.0/COUNT(*), 2) AS loss_rate,
+
+        ROUND((SUM(game_win)/10)*1.0/COUNT(*), 2) / AVG(IIF(game_win = 10, game_score, null)) AS win_rate_to_win_score_ratio,
+        ROUND(1-(SUM(game_win)/10)*1.0/COUNT(*), 2) / AVG(IIF(game_win = 0, game_score, null)) AS loss_rate_to_loss_score_ratio,
 
         ROUND(POWER((AVG(POWER((game_score - avg_spirit_score), 2)) / COUNT(*)), 0.5), 2) AS std_dev_score,
         ROUND(POWER((AVG(POWER(IIF(game_win = 10, (game_score - avg_spirit_win_score), null), 2)) / COUNT(IIF(game_win = 10, game_score, null))), 0.5), 2) AS std_dev_win_score,

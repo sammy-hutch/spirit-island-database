@@ -45,10 +45,10 @@ Accolades
 |X| spirit | i won.. but at what cost? | lowest average score in wins |
 |X| spirit | mvp | highest avg score in wins |
 |X| spirit | drama queen | lowest average score in losses |
-| | spirit | great when it happens | lowest win-rate : win-score ratio |
-| | spirit | ?? | highest win-rate : win-score ratio |
-| | spirit | ?? | highest loss-rate : loss-score ratio |
-| | spirit | ?? | lowest loss-rate : loss-score ratio |
+|X| spirit | great when it happens | lowest win-rate : win-score ratio |
+|X| spirit | gets the job done | highest win-rate : win-score ratio |
+|X| spirit | lesser spirit | highest loss-rate : loss-score ratio |
+|X| spirit | wasn't even worried | lowest loss-rate : loss-score ratio |
 | | spirit | better off alone | highest ratio of solo score to multi-spirit score |
 | | spirit | team player | highest ratio of multi-spirit score to solo score |
 |X| spirit | Never a Dull Day | largest standard deviation in winning games |
