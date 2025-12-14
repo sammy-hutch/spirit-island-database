@@ -6,6 +6,10 @@ spirit_game_data_raw AS (
         gf.game_id,
         gf.game_score,
         gf.game_win,
+        gf.game_difficulty,
+        gf.game_cards,
+        gf.game_dahan,
+        gf.game_blight,
         sd.spirit_name
     from {{ source('main', 'games_fact') }} gf
     left join {{ source('main', 'events_fact') }} ef
@@ -20,6 +24,10 @@ spirit_game_data_over_calcs AS (
         game_id,
         game_score,
         game_win,
+        game_difficulty,
+        game_cards,
+        game_dahan,
+        game_blight,
         spirit_name,
         AVG(game_score) OVER (PARTITION BY spirit_name) AS avg_spirit_score,
         AVG(IIF(game_win = 10, game_score, null)) OVER (PARTITION BY spirit_name) AS avg_spirit_win_score,
@@ -34,6 +42,10 @@ spirit_game_data_agg AS (
         AVG(game_score) AS avg_score,
         AVG(IIF(game_win = 10, game_score, null)) AS avg_win_score,
         AVG(IIF(game_win = 0, game_score, null)) AS avg_loss_score,
+        AVG(game_dahan) AS avg_dahan,
+        AVG(game_blight) AS avg_blight,
+        AVG(IIF(game_win = 10, game_cards, null) / 2) AS avg_win_cards,
+        AVG(IIF(game_win = 0, game_cards, null)) AS avg_loss_cards,
 
         ROUND((SUM(game_win)/10)*1.0/COUNT(*), 2) AS win_rate,
         ROUND(1-(SUM(game_win)/10)*1.0/COUNT(*), 2) AS loss_rate,

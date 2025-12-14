@@ -22,7 +22,7 @@ General TODO:
 
 
 
-Accolades
+Accolades TODO
 | done | nominee | name | accolade |
 | ---- | ------- | ---- | -------- |
 | | adversary | not worth it | lowest avg score in wins |
@@ -35,23 +35,7 @@ Accolades
 | | scenario | edge of tomorrow | lowest avg score for scenario |
 | | spirit pair | best of friends | most frequently paired together spirits |
 | | spirit pair | what does that make us? | most frequently play with the same spirit, but not with each other |
-| | spirit | people person | highest avg dahan on island at endgame |
-| | spirit | antisocial | lowest avg dahan on island at endgame |
-| | spirit | messy eater | highest avg blight on island at endgame |
-| | spirit | clean freak | lowest avg blight on island at endgame |
 | | spirit | got places to be | highest average cards in deck at endgame (in wins) |
 | | spirit | no rush | lowest average cards in deck at endgame (in wins) | 
-|X| spirit | it could have been glorious | highest average score in losses |
-|X| spirit | i won.. but at what cost? | lowest average score in wins |
-|X| spirit | mvp | highest avg score in wins |
-|X| spirit | drama queen | lowest average score in losses |
-|X| spirit | great when it happens | lowest win-rate : win-score ratio |
-|X| spirit | gets the job done | highest win-rate : win-score ratio |
-|X| spirit | lesser spirit | highest loss-rate : loss-score ratio |
-|X| spirit | wasn't even worried | lowest loss-rate : loss-score ratio |
 | | spirit | better off alone | highest ratio of solo score to multi-spirit score |
 | | spirit | team player | highest ratio of multi-spirit score to solo score |
-|X| spirit | Never a Dull Day | largest standard deviation in winning games |
-|X| spirit | Ol' Reliable | smallest standard deviation in winning games |
-|X| spirit | Spirit in a China Shop | largest standard deviation in losing games |
-|X| spirit | Gonna Need a Better Plan | smallest standard deviation in losing games |

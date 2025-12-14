@@ -13,3 +13,7 @@ id,abbreviation,name,description,type,flavour,condition
 "012",gtjd,Gets the Job Done,highest win-rate : win-score ratio,spirit,good,win_rate_to_win_score_ratio = (SELECT MAX(win_rate_to_win_score_ratio) FROM spirit_game_data_agg)
 "013",ls,Lesser Spirit,highest loss-rate : loss-score ratio,spirit,bad,loss_rate_to_loss_score_ratio = (SELECT MAX(loss_rate_to_loss_score_ratio) FROM spirit_game_data_agg)
 "014",wew,Wasn't Even Worried,lowest loss-rate : loss-score ratio,spirit,good,loss_rate_to_loss_score_ratio = (SELECT MIN(loss_rate_to_loss_score_ratio) FROM spirit_game_data_agg WHERE loss_rate != 0)
+"015",pp,People Person,highest avg dahan on island at endgame,spirit,good,avg_dahan = (SELECT MAX(avg_dahan) FROM spirit_game_data_agg)
+"016",as,Anti-social,lowest avg dahan on island at endgame,spirit,bad,avg_dahan = (SELECT MIN(avg_dahan) FROM spirit_game_data_agg)
+"017",cf,Clean Freak,highest avg blight on island at endgame,spirit,good,avg_blight = (SELECT MIN(avg_blight) FROM spirit_game_data_agg)
+"018",me,Messy Eater,lowest avg blight on island at endgame,spirit,bad,avg_blight = (SELECT MAX(avg_blight) FROM spirit_game_data_agg)
