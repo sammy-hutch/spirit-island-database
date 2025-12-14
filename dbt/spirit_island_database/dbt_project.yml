@@ -32,7 +32,11 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   spirit_island_database:
     # Config indicated by + and applies to all files under models/example/
-    example:
-      +materialized: view
     accolades:
       +materialized: table
+
+seeds:
+  spirit_island_database:
+    accolades:
+      +column_types:
+        id: TEXT
