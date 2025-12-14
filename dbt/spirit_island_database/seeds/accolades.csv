@@ -1,7 +1,11 @@
-id,abbreviation,name,description,type,condition
-"001",stb,Simply the Best,highest average score,spirit,avg_game_score = (SELECT MAX(avg_game_score) FROM spirit_game_data_agg)
-"002",wip,WIP,lowest average score,spirit,avg_game_score = (SELECT MIN(avg_game_score) FROM spirit_game_data_agg)
-"003",mvp,MVP,highest average score when winning,spirit,avg_win_score = (SELECT MAX(avg_win_score) FROM spirit_game_data_agg)
-"004",dq,Drama Queen,lowest average score when losing,spirit,avg_loss_score = (SELECT MIN(avg_loss_score) FROM spirit_game_data_agg)
-"005",chbg,It Could Have Been Glorious,highest average score when losing,spirit,avg_loss_score = (SELECT MAX(avg_loss_score) FROM spirit_game_data_agg)
-"006",bawc,I won... But at What Cost?,lowest average score when winning,spirit,avg_win_score = (SELECT MIN(avg_win_score) FROM spirit_game_data_agg)
+id,abbreviation,name,description,type,flavour,condition
+"001",stb,Simply the Best,highest average score,spirit,good,avg_score = (SELECT MAX(avg_score) FROM spirit_game_data_agg)
+"002",wip,WIP,lowest average score,spirit,bad,avg_score = (SELECT MIN(avg_score) FROM spirit_game_data_agg)
+"003",mvp,MVP,highest average score when winning,spirit,good,avg_win_score = (SELECT MAX(avg_win_score) FROM spirit_game_data_agg)
+"004",dq,Drama Queen,lowest average score when losing,spirit,bad,avg_loss_score = (SELECT MIN(avg_loss_score) FROM spirit_game_data_agg)
+"005",chbg,It Could Have Been Glorious,highest average score when losing,spirit,good,avg_loss_score = (SELECT MAX(avg_loss_score) FROM spirit_game_data_agg)
+"006",bawc,I won... But at What Cost?,lowest average score when winning,spirit,bad,avg_win_score = (SELECT MIN(avg_win_score) FROM spirit_game_data_agg)
+"007",nadd,Never a Dull Day,largest standard deviation in winning games,spirit,good,std_dev_win_score = (SELECT MAX(std_dev_win_score) FROM spirit_game_data_agg)
+"008",or,Ol' Reliable,smallest standard deviation in winning games,spirit,good,std_dev_win_score = (SELECT MIN(std_dev_win_score) FROM spirit_game_data_agg WHERE win_rate != 0)
+"009",siacs,Spirit in a China Shop,largest standard deviation in losing games,spirit,bad,std_dev_loss_score = (SELECT MAX(std_dev_loss_score) FROM spirit_game_data_agg)
+"010",gnabp,Gonna Need a Better Plan,smallest standard deviation in losing games,spirit,bad,std_dev_loss_score = (SELECT MIN(std_dev_loss_score) FROM spirit_game_data_agg WHERE win_rate != 0)

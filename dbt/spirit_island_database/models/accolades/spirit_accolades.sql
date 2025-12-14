@@ -21,7 +21,9 @@ spirit_game_data_over_calcs AS (
         game_score,
         game_win,
         spirit_name,
-        AVG(game_score) OVER (PARTITION BY spirit_name) AS avg_game_score
+        AVG(game_score) OVER (PARTITION BY spirit_name) AS avg_spirit_score,
+        AVG(IIF(game_win = 10, game_score, null)) OVER (PARTITION BY spirit_name) AS avg_spirit_win_score,
+        AVG(IIF(game_win = 0, game_score, null)) OVER (PARTITION BY spirit_name) AS avg_spirit_loss_score
     from spirit_game_data_raw
 )
 ,
@@ -36,16 +38,18 @@ spirit_game_data_agg AS (
         (SUM(game_win)/10)*1.0/COUNT(*) AS win_rate,
         1-(SUM(game_win)/10)*1.0/COUNT(*) AS loss_rate,
 
-        POWER((AVG(POWER((game_score - avg_game_score), 2))/COUNT(*)), 0.5) AS std_dev_score
+        ROUND(POWER((AVG(POWER((game_score - avg_spirit_score), 2)) / COUNT(*)), 0.5), 2) AS std_dev_score,
+        ROUND(POWER((AVG(POWER(IIF(game_win = 10, (game_score - avg_spirit_win_score), null), 2)) / COUNT(IIF(game_win = 10, game_score, null))), 0.5), 2) AS std_dev_win_score,
+        ROUND(POWER((AVG(POWER(IIF(game_win = 0, (game_score - avg_spirit_loss_score), null), 2)) / COUNT(IIF(game_win = 0, game_score, null))), 0.5), 2) AS std_dev_loss_score
 
     from spirit_game_data_over_calcs
     group by spirit_name
 )
---,
+,
 
-SELECT * FROM spirit_game_data_agg
+--SELECT * FROM spirit_game_data_agg
 
-{#
+
 {%- for accolade in accolades %}
     {{ accolade_cte(accolade) }}
 
@@ -56,11 +60,10 @@ SELECT * FROM spirit_game_data_agg
 {%- endfor %}
 
 {%- for accolade in accolades %}
-    SELECT * FROM {{accolade.abbreviation}}
+    SELECT * FROM "{{accolade.abbreviation}}"
 
     {%- if not loop.last %}
     UNION ALL
     {%- endif %}
 
 {%- endfor %}
-#}

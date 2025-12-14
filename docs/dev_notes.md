@@ -51,7 +51,7 @@ Accolades
 | | spirit | ?? | lowest loss-rate : loss-score ratio |
 | | spirit | better off alone | highest ratio of solo score to multi-spirit score |
 | | spirit | team player | highest ratio of multi-spirit score to solo score |
-| | spirit | Never a Dull Day | largest standard deviation in winning games |
-| | spirit | Ol' Reliable | smallest standard deviation in winning games |
-| | spirit | Spirit in a China Shop | largest standard deviation in losing games |
-| | spirit | ?? | smallest standard deviation in losing games |
+|X| spirit | Never a Dull Day | largest standard deviation in winning games |
+|X| spirit | Ol' Reliable | smallest standard deviation in winning games |
+|X| spirit | Spirit in a China Shop | largest standard deviation in losing games |
+|X| spirit | Gonna Need a Better Plan | smallest standard deviation in losing games |
