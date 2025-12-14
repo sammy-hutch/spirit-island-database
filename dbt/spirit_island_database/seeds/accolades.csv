@@ -21,3 +21,7 @@ id,abbreviation,name,description,type,flavour,condition
 "020",nr,No Rush,lowest average number of invader cards remaining at endgame (when winning),spirit,bad,avg_win_cards = (SELECT MIN(avg_win_cards) FROM spirit_game_data_agg WHERE win_rate != 0)
 "021",hit,Hanging In There,highest average number of invader cards revealed at endgame (when losing),spirit,good,avg_loss_cards = (SELECT MAX(avg_loss_cards) FROM spirit_game_data_agg)
 "022",aliwq,At Least it Was Quick,lowest average number of invader cards revealed at endgame (when losing),spirit,bad,avg_loss_cards = (SELECT MIN(avg_loss_cards) FROM spirit_game_data_agg WHERE loss_rate != 0)
+"023",i,Introverted,highest ratio of solo games,spirit,neutral,solo_rate = (SELECT MAX(solo_rate) FROM spirit_game_data_agg)
+"024",e,Extroverted,lowest ratio of solo games,spirit,neutral,solo_rate = (SELECT MIN(solo_rate) FROM spirit_game_data_agg)
+"025",lotp,Life of the Party,highest avg number of spirits in games,spirit,neutral,avg_no_of_spirits = (SELECT MAX(avg_no_of_spirits) FROM spirit_game_data_agg)
+"026",cc,Closed Circle,lowest avg number of spirits in games,spirit,neutral,avg_no_of_spirits = (SELECT MIN(avg_no_of_spirits) FROM spirit_game_data_agg)

@@ -38,3 +38,4 @@ Accolades TODO
 | | spirit | better off alone | highest ratio of solo score to multi-spirit score |
 | | spirit | team player | highest ratio of multi-spirit score to solo score |
 | | spirit | the blight never bothered me anyway | highest score despite high blight ratio (possibly calculated with regression) |
+| | spirit | [adversary name] nemesis | highest average score against [adversary]
