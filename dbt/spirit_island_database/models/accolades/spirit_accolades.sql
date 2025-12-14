@@ -15,18 +15,37 @@ spirit_game_data_raw AS (
     where LOWER(sd.spirit_name) NOT LIKE '%custom%'
 )
 ,
+spirit_game_data_over_calcs AS (
+    select
+        game_id,
+        game_score,
+        game_win,
+        spirit_name,
+        AVG(game_score) OVER (PARTITION BY spirit_name) AS avg_game_score
+    from spirit_game_data_raw
+)
+,
 spirit_game_data_agg AS (
     select
         spirit_name,
-        AVG(game_score) AS avg_game_score,
+
+        AVG(game_score) AS avg_score,
         AVG(IIF(game_win = 10, game_score, null)) AS avg_win_score,
         AVG(IIF(game_win = 0, game_score, null)) AS avg_loss_score,
-        (SUM(game_win)/10)/COUNT(*) AS win_rate,
-        1-(SUM(game_win)/10)/COUNT(*) AS loss_rate
-    from spirit_game_data_raw
-    group by spirit_name
-),
 
+        (SUM(game_win)/10)*1.0/COUNT(*) AS win_rate,
+        1-(SUM(game_win)/10)*1.0/COUNT(*) AS loss_rate,
+
+        POWER((AVG(POWER((game_score - avg_game_score), 2))/COUNT(*)), 0.5) AS std_dev_score
+
+    from spirit_game_data_over_calcs
+    group by spirit_name
+)
+--,
+
+SELECT * FROM spirit_game_data_agg
+
+{#
 {%- for accolade in accolades %}
     {{ accolade_cte(accolade) }}
 
@@ -44,3 +63,4 @@ spirit_game_data_agg AS (
     {%- endif %}
 
 {%- endfor %}
+#}
