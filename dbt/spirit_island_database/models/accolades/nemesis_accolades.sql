@@ -52,15 +52,22 @@ game_data_agg AS (
         adversary_id,
         adversary_name
 )
---,
-
-SELECT * FROM game_data_agg
+,
 
 {%- for spirit in spirits_dim %}
     {{ nemesis_cte(spirit) }}
 
     {%- if not loop.last %}
     ,
+    {%- endif %}
+
+{%- endfor %}
+
+{%- for spirit in spirits_dim %}
+    SELECT * FROM "Nemesis to {{spirit.name}}"
+
+    {%- if not loop.last %}
+    UNION ALL
     {%- endif %}
 
 {%- endfor %}

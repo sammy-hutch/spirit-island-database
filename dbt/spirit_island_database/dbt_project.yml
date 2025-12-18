@@ -34,6 +34,8 @@ models:
     # Config indicated by + and applies to all files under models/example/
     accolades:
       +materialized: table
+    staging:
+      +materialized: ephemeral
 
 seeds:
   spirit_island_database:
