@@ -1,0 +1,13 @@
+models:
+  - name: adversary_accolades
+    description: ...
+
+    columns:
+      - name: accolade_id
+        description: ...
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: accolade_name
+        description: ...
