@@ -1,16 +1,6 @@
 {% set accolades = load_seed('accolades') %}
 
-WITH 
-custom_spirits AS (
-    SELECT distinct spirit_id
-    FROM {{ source('main', 'spirits_dim') }}
-    WHERE LOWER(spirit_name) LIKE '%custom%'
-),
-playtests AS (
-    SELECT distinct game_id
-    FROM {{ source('main', 'events_fact') }}
-    WHERE spirit_id IN (SELECT * FROM custom_spirits)
-),
+WITH
 spirit_game_data_raw AS (
     select distinct
         gf.game_id,
@@ -26,7 +16,7 @@ spirit_game_data_raw AS (
         on ef.game_id = gf.game_id
     left join {{ source('main', 'spirits_dim') }} sd
         on sd.spirit_id = ef.spirit_id
-    where gf.game_id NOT IN (SELECT * FROM playtests)
+    where gf.game_id NOT IN (SELECT * FROM {{ ref('playtest_filter') }})
 )
 ,
 spirit_game_data_over_calcs AS (

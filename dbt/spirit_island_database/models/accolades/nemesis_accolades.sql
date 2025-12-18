@@ -1,17 +1,7 @@
-{% set spirits_dim = load_seed('spirits_dim') %}
-{% set adversaries_dim = load_seed('adversaries_dim') %}
+{%- set spirits_dim = load_dim('spirits_dim', 'spirit') %}
+{%- set adversaries_dim = load_dim('adversaries_dim', 'adversary') %}
 
-WITH 
-custom_spirits AS (
-    SELECT distinct spirit_id
-    FROM {{ source('main', 'spirits_dim') }}
-    WHERE LOWER(spirit_name) LIKE '%custom%'
-),
-playtests AS (
-    SELECT distinct game_id
-    FROM {{ source('main', 'events_fact') }}
-    WHERE spirit_id IN (SELECT * FROM custom_spirits)
-),
+WITH
 game_data_raw AS (
     select distinct
         gf.game_id,
@@ -32,7 +22,7 @@ game_data_raw AS (
         on sd.spirit_id = ef.spirit_id
     left join {{ source('main', 'adversaries_dim') }} ad
         on ad.adversary_id = ef.adversary_id
-    where gf.game_id NOT IN (SELECT * FROM playtests)
+    where gf.game_id NOT IN (SELECT * FROM {{ ref('playtest_filter') }})
 ),
 game_data_agg AS (
     SELECT
@@ -66,9 +56,11 @@ game_data_agg AS (
 
 SELECT * FROM game_data_agg
 
-{% for spirit in spirits_dim %}
+{%- for spirit in spirits_dim %}
+    {{ nemesis_cte(spirit) }}
 
--- {{spirit.spirit_id}}
--- {{spirit.spirit_name}}
+    {%- if not loop.last %}
+    ,
+    {%- endif %}
 
-{% endfor %}
+{%- endfor %}
