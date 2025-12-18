@@ -22,12 +22,12 @@
         "{{nemesis.nemesis_name}}" AS accolade_name,
         "Nemesis to {{nemesis.name}}" AS accolade_description,
         {{recipient_type}}_name AS accolade_recipient
-    from game_data_agg
+    from {{ ref('nemeses_base') }}
     where 
         {{nemesis.type}}_id = {{nemesis.id}}
         AND win_rate = (
             select {{agg_func}}(win_rate)
-            from game_data_agg
+            from {{ ref('nemeses_base') }}
             where {{nemesis.type}}_id = {{nemesis.id}}
         )
     order by 
