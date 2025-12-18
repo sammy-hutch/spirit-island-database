@@ -1,4 +1,3 @@
-{%- set spirits_dim = load_dim('spirits_dim', 'spirit') %}
 {%- set adversaries_dim = load_dim('adversaries_dim', 'adversary') %}
 
 WITH
@@ -54,8 +53,8 @@ game_data_agg AS (
 )
 ,
 
-{%- for spirit in spirits_dim %}
-    {{ nemesis_cte(spirit) }}
+{%- for adversary in adversaries_dim %}
+    {{ nemesis_cte(adversary) }}
 
     {%- if not loop.last %}
     ,
@@ -63,8 +62,8 @@ game_data_agg AS (
 
 {%- endfor %}
 
-{%- for spirit in spirits_dim %}
-    SELECT * FROM "Nemesis to {{spirit.name}}"
+{%- for adversary in adversaries_dim %}
+    SELECT * FROM "Nemesis to {{adversary.name}}"
 
     {%- if not loop.last %}
     UNION ALL

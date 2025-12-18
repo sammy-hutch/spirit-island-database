@@ -1,4 +1,4 @@
-{% set accolades = load_seed('accolades') %}
+{% set accolades = load_seed('spirit_accolades_list') %}
 
 WITH
 spirit_game_data_raw AS (
@@ -83,9 +83,7 @@ spirit_game_data_agg AS (
 
 {%- for accolade in accolades %}
     SELECT * FROM "{{accolade.abbreviation}}"
-
-    {%- if not loop.last %}
     UNION ALL
-    {%- endif %}
-
 {%- endfor %}
+
+SELECT * FROM {{ ref('adversary_nemeses') }}

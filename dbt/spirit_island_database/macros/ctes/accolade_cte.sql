@@ -2,7 +2,7 @@
 
 "{{accolade.abbreviation}}" AS (
     select
-        "{{accolade.id}}" AS accolade_id,
+        "{{accolade.type}}_accolade_{{accolade.id}}" AS accolade_id,
         "{{accolade.name}}" AS accolade_name,
         "{{accolade.description}}" AS accolade_description,
         {{accolade.type}}_name AS accolade_recipient
