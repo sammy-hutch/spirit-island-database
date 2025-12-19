@@ -1,0 +1,2 @@
+id,abbreviation,name,description,type,flavour,condition
+"001",nwi,Not Worth it,lowest average score when winning,adversary,good,avg_win_score = (SELECT MIN(avg_win_score) FROM adversary_game_data_agg)
