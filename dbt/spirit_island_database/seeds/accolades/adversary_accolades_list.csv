@@ -1,2 +1,4 @@
 id,abbreviation,name,description,type,flavour,condition
 "001",nwi,Not Worth it,lowest average score when winning,adversary,good,avg_win_score = (SELECT MIN(avg_win_score) FROM adversary_game_data_agg)
+"002",tntc,Tough Nut To Crack,lowest win rate,adversary,good,win_rate = (SELECT MIN(win_rate) FROM adversary_game_data_agg)
+"003",i,Intimidating,lowest average difficulty,adversary,good,avg_difficulty = (SELECT MIN(avg_difficulty) FROM adversary_game_data_agg)

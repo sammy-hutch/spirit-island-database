@@ -29,6 +29,7 @@ spirit_game_data_over_calcs AS (
         game_dahan,
         game_blight,
         spirit_name,
+        IIF(game_win = 10, (game_difficulty*1.0)/5, (game_difficulty*1.0)/2) AS true_game_difficulty,
         AVG(game_score) OVER (PARTITION BY spirit_name) AS avg_spirit_score,
         AVG(IIF(game_win = 10, game_score, null)) OVER (PARTITION BY spirit_name) AS avg_spirit_win_score,
         AVG(IIF(game_win = 0, game_score, null)) OVER (PARTITION BY spirit_name) AS avg_spirit_loss_score,
@@ -49,6 +50,7 @@ spirit_game_data_agg AS (
         AVG(IIF(game_win = 10, game_cards, null) / 2) AS avg_win_cards,
         AVG(IIF(game_win = 0, game_cards, null)) AS avg_loss_cards,
         AVG(no_of_spirits) AS avg_no_of_spirits,
+        AVG(true_game_difficulty) AS avg_difficulty,
 
         --rates
         ROUND((SUM(game_win)/10)*1.0/COUNT(*), 2) AS win_rate,

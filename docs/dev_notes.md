@@ -25,9 +25,6 @@ General TODO:
 Accolades TODO
 | done | nominee | name | accolade |
 | ---- | ------- | ---- | -------- |
-| | adversary | not worth it | lowest avg score in wins |
-| | adversary | tough nut to crack | lowest win rate |
-| | adversary | intimidating | lowest avg difficulty |
 | | adversary&scenario | let's hope this never happens | lowest avg score for pairing of adv and sce |
 | | adversary&scenario | cheat code | highest avg score for pairing of adv and sce |
 | | adversary&spirit | we meet again | most common matchup of adversary with spirit |
@@ -38,3 +35,5 @@ Accolades TODO
 | | spirit | better off alone | highest ratio of solo score to multi-spirit score |
 | | spirit | team player | highest ratio of multi-spirit score to solo score |
 | | spirit | the blight never bothered me anyway | highest score despite high blight ratio (possibly calculated with regression) |
+| | spirit | competent | highest avg difficulty |
+| | spirit | timid | lowest avg difficulty |
