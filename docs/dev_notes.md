@@ -33,5 +33,3 @@ Accolades TODO
 | | spirit pair | best of friends | most frequently paired together spirits |
 | | spirit pair | what does that make us? | most frequently play with the same spirit, but not with each other |
 | | spirit | the blight never bothered me anyway | highest score despite high blight ratio (possibly calculated with regression) |
-| | spirit | competent | highest avg difficulty |
-| | spirit | timid | lowest avg difficulty |

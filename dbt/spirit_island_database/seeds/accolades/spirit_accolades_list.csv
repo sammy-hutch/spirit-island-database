@@ -27,3 +27,5 @@ id,abbreviation,name,description,type,flavour,condition
 "026",cc,Closed Circle,lowest avg number of spirits in games,spirit,neutral,avg_no_of_spirits = (SELECT MIN(avg_no_of_spirits) FROM spirit_game_data_agg)
 "027",tp,Team Player,highest ratio of non-solo score to solo score,spirit,neutral,team_bias = (SELECT MAX(team_bias) FROM spirit_game_data_agg WHERE min_no_of_spirits = 1)
 "028",boa,Better Off Alone,highest ratio of solo score to non-solo score,spirit,neutral,team_bias = (SELECT MIN(team_bias) FROM spirit_game_data_agg WHERE min_no_of_spirits = 1)
+"029",c,Confident,highest average difficulty,spirit,good,avg_difficulty = (SELECT MAX(avg_difficulty) FROM spirit_game_data_agg)
+"030",t,Timid,lowest average difficulty,spirit,bad,avg_difficulty = (SELECT MIN(avg_difficulty) FROM spirit_game_data_agg)
