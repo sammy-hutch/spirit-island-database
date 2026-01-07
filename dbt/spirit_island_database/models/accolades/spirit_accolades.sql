@@ -41,6 +41,9 @@ spirit_game_data_agg AS (
     select
         spirit_name,
 
+        --flags
+        MIN(no_of_spirits) AS min_no_of_spirits, 
+
         --avgs
         AVG(game_score) AS avg_score,
         AVG(IIF(game_win = 10, game_score, null)) AS avg_win_score,
@@ -50,12 +53,17 @@ spirit_game_data_agg AS (
         AVG(IIF(game_win = 10, game_cards, null) / 2) AS avg_win_cards,
         AVG(IIF(game_win = 0, game_cards, null)) AS avg_loss_cards,
         AVG(no_of_spirits) AS avg_no_of_spirits,
+        AVG(IIF(no_of_spirits = 1, game_score, null)) AS avg_solo_score,
+        AVG(IIF(no_of_spirits != 1, game_score, null)) AS avg_team_score,
         AVG(true_game_difficulty) AS avg_difficulty,
 
         --rates
         ROUND((SUM(game_win)/10)*1.0/COUNT(*), 2) AS win_rate,
         ROUND(1-(SUM(game_win)/10)*1.0/COUNT(*), 2) AS loss_rate,
         ROUND(SUM(IIF(no_of_spirits = 1, 1, 0))*1.0/COUNT(*), 2) AS solo_rate,
+
+        --ratios
+        ROUND(AVG(IIF(no_of_spirits != 1, game_score, null))*1.0 / AVG(IIF(no_of_spirits = 1, game_score, null)), 2) AS team_bias,
 
         --rates to score ratios
         ROUND((SUM(game_win)/10)*1.0/COUNT(*), 2) / AVG(IIF(game_win = 10, game_score, null)) AS win_rate_to_win_score_ratio,

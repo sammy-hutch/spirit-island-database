@@ -32,8 +32,6 @@ Accolades TODO
 | | scenario | edge of tomorrow | lowest avg score for scenario |
 | | spirit pair | best of friends | most frequently paired together spirits |
 | | spirit pair | what does that make us? | most frequently play with the same spirit, but not with each other |
-| | spirit | better off alone | highest ratio of solo score to multi-spirit score |
-| | spirit | team player | highest ratio of multi-spirit score to solo score |
 | | spirit | the blight never bothered me anyway | highest score despite high blight ratio (possibly calculated with regression) |
 | | spirit | competent | highest avg difficulty |
 | | spirit | timid | lowest avg difficulty |
