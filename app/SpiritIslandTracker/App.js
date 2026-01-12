@@ -1,20 +1,27 @@
 // App.js
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, Button } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+// import { createNativeStackNavigator } from '@react-navigation/native-stack'; // No longer needed for main navigation
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; // <-- NEW IMPORT
 import * as SQLite from 'expo-sqlite';
-import AddGameScreen from './src/screens/AddGameScreen';
-import ViewResultsScreen from './src/screens/ViewResultsScreen';
 
+// Import your screen components
+import AddGameScreen from './src/screens/AddGameScreen';     // <-- NEW IMPORT
+import ViewResultsScreen from './src/screens/ViewResultsScreen'; // <-- NEW IMPORT
+
+// --- REMOVE Placeholder Screens from App.js ---
+// function AddGameScreen({ navigation }) { ... }
+// function ViewResultsScreen({ navigation }) { ... }
 // -------------------------------------------------------------------
 
-const Stack = createNativeStackNavigator();
+// const Stack = createNativeStackNavigator(); // No longer needed
+const Tab = createBottomTabNavigator(); // <-- NEW: Initialize Tab Navigator
 
 // Declare db globally but assign it after opening async
 let db = null;
 
-// --- Database Initialization Logic ---
+// --- Database Initialization Logic (UNCHANGED) ---
 const initializeDatabase = async () => {
   try {
     db = await SQLite.openDatabaseAsync("spiritIslandTracker.db");
@@ -76,8 +83,7 @@ const initializeDatabase = async () => {
   }
 };
 
-// --- Initial Hardcoded Master Data Insertion ---
-// This is temporary! Later, this will be fetched from your Google Sheet.
+// --- Initial Hardcoded Master Data Insertion (UNCHANGED) ---
 const populateMasterData = async () => {
   if (!db) {
     console.error("Database not initialized, cannot populate master data.");
@@ -98,9 +104,13 @@ const populateMasterData = async () => {
     await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name, related_spirit) VALUES ('aspect', 'Locus', 'Downpour Drenches the World');`);
     await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name, related_spirit) VALUES ('aspect', 'Tsunami', 'Downpour Drenches the World');`);
 
+    // Additional sample aspects for other spirits to make dynamic filtering more obvious
+    await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name, related_spirit) VALUES ('aspect', 'Resilient', 'Aching Blood');`);
+    await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name, related_spirit) VALUES ('aspect', 'Vengeful', 'Aching Blood');`);
+
     console.log("Master data populated (or already exists).");
   } catch (error) {
-    console.error("Error populating master data:", error);
+    console.error("Master data transaction error:", error);
     throw error;
   }
 };
@@ -143,10 +153,47 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="AddGame">
-        <Stack.Screen name="AddGame" component={AddGameScreen} options={{ title: 'Add Game Results' }} />
-        <Stack.Screen name="ViewResults" component={ViewResultsScreen} options={{ title: 'My Game Results' }} />
-      </Stack.Navigator>
+      <Tab.Navigator
+        initialRouteName="AddGameTab" // Set the initial tab
+        screenOptions={({ route }) => ({
+          headerShown: true, // Show header for each screen in the tab navigator
+          tabBarIcon: ({ focused, color, size }) => {
+            // You can use a library like 'react-native-vector-icons' for actual icons,
+            // or simple text for now.
+            let iconName;
+
+            if (route.name === 'AddGameTab') {
+              iconName = focused ? '📝' : '🗒️'; // Emoji as placeholder icons
+            } else if (route.name === 'ViewResultsTab') {
+              iconName = focused ? '📊' : '📈'; // Emoji as placeholder icons
+            }
+
+            // You can return any component that you like here!
+            return <Text style={{ color, fontSize: size }}>{iconName}</Text>;
+          },
+          tabBarActiveTintColor: 'tomato', // Color for active tab icon/label
+          tabBarInactiveTintColor: 'gray',  // Color for inactive tab icon/label
+          tabBarStyle: { height: 60, paddingBottom: 5 }, // Adjust tab bar style
+          tabBarLabelStyle: { fontSize: 12 },
+        })}
+      >
+        <Tab.Screen
+          name="AddGameTab"
+          component={AddGameScreen}
+          options={{
+            title: 'Record Game', // Header title for this screen
+            tabBarLabel: 'Record Game', // Label on the tab bar
+          }}
+        />
+        <Tab.Screen
+          name="ViewResultsTab"
+          component={ViewResultsScreen}
+          options={{
+            title: 'View Results', // Header title for this screen
+            tabBarLabel: 'View Results', // Label on the tab bar
+          }}
+        />
+      </Tab.Navigator>
     </NavigationContainer>
   );
 }

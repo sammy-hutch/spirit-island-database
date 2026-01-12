@@ -380,13 +380,13 @@ function AddGameScreen({ navigation }) {
 
       Alert.alert("Success", "Game results saved successfully!");
       // Optionally navigate away or reset form
-      navigation.goBack(); // Example: go back to previous screen
+      //navigation.goBack(); // Example: go back to previous screen
       // Or reset form:
-      // setFormData({
-      //   mobileGame: false, notes: '', difficulty: '', winLoss: null,
-      //   invaderCards: '', dahanSpirit: '', blightSpirit: '',
-      //   spirits: [{ name: null, aspect: null }], adversaries: [], scenarios: []
-      // });
+      setFormData({
+        mobileGame: false, notes: '', difficulty: '', winLoss: null,
+        invaderCards: '', dahanSpirit: '', blightSpirit: '',
+        spirits: [{ name: null, aspect: null }], adversaries: [], scenarios: []
+      });
 
     } catch (error) {
       console.error("Error saving game results:", error);

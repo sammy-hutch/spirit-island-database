@@ -11,9 +11,13 @@
   },
   "dependencies": {
     "@react-native-picker/picker": "^2.11.4",
+    "@react-navigation/bottom-tabs": "^7.9.1",
     "@react-navigation/native": "^7.1.26",
     "@react-navigation/native-stack": "^7.9.0",
     "expo": "~54.0.31",
+    "expo-clipboard": "~8.0.8",
+    "expo-file-system": "~19.0.21",
+    "expo-sharing": "~14.0.8",
     "expo-sqlite": "~16.0.10",
     "expo-status-bar": "~3.0.9",
     "prop-types": "^15.8.1",
