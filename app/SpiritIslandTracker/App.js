@@ -4,27 +4,8 @@ import { StyleSheet, Text, View, ActivityIndicator, Button } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as SQLite from 'expo-sqlite';
+import AddGameScreen from './src/screens/AddGameScreen';
 
-// --- Placeholder Screens (will be created in separate files later) ---
-function AddGameScreen({ navigation }) {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Add New Game Results</Text>
-      <Text>This is where you'll enter game data.</Text>
-      <Button title="Go to Results" onPress={() => navigation.navigate('ViewResults')} />
-    </View>
-  );
-}
-
-function ViewResultsScreen({ navigation }) {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>View & Export Results</Text>
-      <Text>This is where your saved games will appear.</Text>
-      <Button title="Add New Game" onPress={() => navigation.navigate('AddGame')} />
-    </View>
-  );
-}
 // -------------------------------------------------------------------
 
 const Stack = createNativeStackNavigator();
