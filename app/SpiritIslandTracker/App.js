@@ -2,21 +2,17 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack'; // No longer needed for main navigation
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; // <-- NEW IMPORT
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as SQLite from 'expo-sqlite';
 
+// --- NEW IMPORTS ---
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+
 // Import your screen components
-import AddGameScreen from './src/screens/AddGameScreen';     // <-- NEW IMPORT
-import ViewResultsScreen from './src/screens/ViewResultsScreen'; // <-- NEW IMPORT
+import AddGameScreen from './src/screens/AddGameScreen';
+import ViewResultsScreen from './src/screens/ViewResultsScreen';
 
-// --- REMOVE Placeholder Screens from App.js ---
-// function AddGameScreen({ navigation }) { ... }
-// function ViewResultsScreen({ navigation }) { ... }
-// -------------------------------------------------------------------
-
-// const Stack = createNativeStackNavigator(); // No longer needed
-const Tab = createBottomTabNavigator(); // <-- NEW: Initialize Tab Navigator
+const Tab = createBottomTabNavigator();
 
 // Declare db globally but assign it after opening async
 let db = null;
@@ -26,12 +22,9 @@ const initializeDatabase = async () => {
   try {
     db = await SQLite.openDatabaseAsync("spiritIslandTracker.db");
     console.log("Database opened successfully!");
-
-    // Set PRAGMA for better performance (Write-Ahead Logging)
     await db.execAsync(`PRAGMA journal_mode = WAL;`);
     console.log("WAL mode enabled.");
 
-    // Create games_dim table
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS games_dim (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,7 +47,6 @@ const initializeDatabase = async () => {
     );
     console.log("games_dim table created successfully or already exists.");
 
-    // Create events_dim table (for spirits and aspects, one row per spirit per game)
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS events_dim (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,7 +58,6 @@ const initializeDatabase = async () => {
     );
     console.log("events_dim table created successfully or already exists.");
 
-    // Create master_data table (for dynamic lists: spirits, adversaries, aspects, scenarios)
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS master_data (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,7 +70,7 @@ const initializeDatabase = async () => {
 
   } catch (error) {
     console.error("Error initializing database:", error);
-    throw error; // Re-throw to be caught by the useEffect's catch block
+    throw error;
   }
 };
 
@@ -115,15 +106,19 @@ const populateMasterData = async () => {
   }
 };
 
-export default function App() {
+// --- New AppContent Component ---
+// This component will be wrapped by SafeAreaProvider in App()
+// It allows us to use useSafeAreaInsets hook correctly.
+function AppContent() {
   const [dbInitialized, setDbInitialized] = useState(false);
   const [error, setError] = useState(null);
+  const insets = useSafeAreaInsets(); // <-- Use the hook here!
 
   useEffect(() => {
     const setupDatabase = async () => {
       try {
         await initializeDatabase();
-        await populateMasterData(); // Populate initial hardcoded data
+        await populateMasterData();
         setDbInitialized(true);
       } catch (e) {
         console.error("Failed to initialize database:", e);
@@ -154,26 +149,25 @@ export default function App() {
   return (
     <NavigationContainer>
       <Tab.Navigator
-        initialRouteName="AddGameTab" // Set the initial tab
+        initialRouteName="AddGameTab"
         screenOptions={({ route }) => ({
-          headerShown: true, // Show header for each screen in the tab navigator
+          headerShown: true,
           tabBarIcon: ({ focused, color, size }) => {
-            // You can use a library like 'react-native-vector-icons' for actual icons,
-            // or simple text for now.
             let iconName;
-
             if (route.name === 'AddGameTab') {
-              iconName = focused ? '📝' : '🗒️'; // Emoji as placeholder icons
+              iconName = focused ? '📝' : '🗒️';
             } else if (route.name === 'ViewResultsTab') {
-              iconName = focused ? '📊' : '📈'; // Emoji as placeholder icons
+              iconName = focused ? '📊' : '📈';
             }
-
-            // You can return any component that you like here!
             return <Text style={{ color, fontSize: size }}>{iconName}</Text>;
           },
-          tabBarActiveTintColor: 'tomato', // Color for active tab icon/label
-          tabBarInactiveTintColor: 'gray',  // Color for inactive tab icon/label
-          tabBarStyle: { height: 60, paddingBottom: 5 }, // Adjust tab bar style
+          tabBarActiveTintColor: 'tomato',
+          tabBarInactiveTintColor: 'gray',
+          tabBarStyle: {
+            // Adjust height to account for safe area and base height
+            height: 60 + insets.bottom,
+            paddingBottom: insets.bottom, // <-- IMPORTANT: Apply safe area padding here
+          },
           tabBarLabelStyle: { fontSize: 12 },
         })}
       >
@@ -181,20 +175,29 @@ export default function App() {
           name="AddGameTab"
           component={AddGameScreen}
           options={{
-            title: 'Record Game', // Header title for this screen
-            tabBarLabel: 'Record Game', // Label on the tab bar
+            title: 'Record Game',
+            tabBarLabel: 'Record Game',
           }}
         />
         <Tab.Screen
           name="ViewResultsTab"
           component={ViewResultsScreen}
           options={{
-            title: 'View Results', // Header title for this screen
-            tabBarLabel: 'View Results', // Label on the tab bar
+            title: 'View Results',
+            tabBarLabel: 'View Results',
           }}
         />
       </Tab.Navigator>
     </NavigationContainer>
+  );
+}
+
+// --- Original App Component now wraps AppContent with SafeAreaProvider ---
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppContent />
+    </SafeAreaProvider>
   );
 }
 
@@ -230,5 +233,4 @@ const styles = StyleSheet.create({
   },
 });
 
-// Export the db object so other modules can import and use it
 export { db };
