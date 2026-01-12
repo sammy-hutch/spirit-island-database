@@ -136,6 +136,14 @@ Install npm
 Install expo-cli
 ```bash
 npm install -g expo-cli create-expo-app
+npx expo install react-native-screens react-native-safe-area-context
+npm install @react-navigation/native @react-navigation/native-stack
+npx expo install expo-sqlite
+```
+
+Install requirements from package.json
+```bash
+npm install
 ```
 
 ## Testing app
@@ -144,8 +152,10 @@ navigate to directory
 cd app/SpiritIslandTracker
 ```
 
+run the app on phone  accessible public connection
 ```bash
-npm run web
+npm start -- --tunnel
 ```
 
+open expo go app on phone and scan qr code in terminal
 
