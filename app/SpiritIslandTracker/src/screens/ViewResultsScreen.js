@@ -1,4 +1,4 @@
-
+// src/screens/ViewResultsScreen.js
 import React, { useState, useCallback } from 'react';
 import {
   View,
@@ -67,12 +67,42 @@ const GameItem = ({ game }) => (
   </View>
 );
 
+// --- NEW GENERIC CSV GENERATION HELPER ---
+const generateCsvFromObjects = (dataArray) => {
+  if (!dataArray || dataArray.length === 0) {
+    return "";
+  }
+
+  // Get headers from the keys of the first object
+  const headers = Object.keys(dataArray[0]);
+
+  // CSV escape function
+  const escapeCsvField = (field) => {
+    if (field === null || field === undefined) return '';
+    let str = String(field);
+    // If the string contains comma, double-quote, or newline,
+    // enclose it in double-quotes and escape internal double-quotes.
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const headerRow = headers.map(escapeCsvField).join(',');
+  const dataRows = dataArray.map(obj =>
+    headers.map(header => escapeCsvField(obj[header])).join(',')
+  );
+
+  return [headerRow, ...dataRows].join('\n');
+};
+// --- END NEW GENERIC CSV GENERATION HELPER ---
+
 function ViewResultsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [gameData, setGameData] = useState([]);
-  const [exporting, setExporting] = useState(false); // State to disable export button during export
+  const [exporting, setExporting] = useState(false);
+  const [copyingRaw, setCopyingRaw] = useState(false); // To disable raw copy buttons during operation
 
-  // Function to fetch all game data from the database
   const fetchGameData = useCallback(async () => {
     if (!db) {
       Alert.alert("Error", "Database not initialized. Please restart the app.");
@@ -89,15 +119,18 @@ function ViewResultsScreen({ navigation }) {
               scenario_1_name, scenario_2_name
        FROM games_dim ORDER BY played_at DESC;`
       );
+      // console.log('Fetched base game data:', games.map(g => ({ id: g.id, score: g.total_score }))); // DEBUG LOG
 
       const combinedData = [];
 
       // 2. For each game, fetch its associated spirits from events_dim
       for (const game of games) {
+        // console.log(`Attempting to fetch spirits for game ID: ${game.id}`); // DEBUG LOG
         const spirits = await db.getAllAsync(
           `SELECT spirit_name, aspect_name FROM events_dim WHERE game_id = ?;`,
           [game.id]
         );
+        // console.log(`Fetched spirits for game ID ${game.id}:`, spirits); // DEBUG LOG
 
         // 3. Process adversaries and scenarios (these are stored directly in games_dim)
         const adversaries = [];
@@ -130,20 +163,17 @@ function ViewResultsScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
-  }, []); // `db` is stable, so no need to add it to dependencies for useCallback
+  }, []);
 
-  // Use useFocusEffect to reload data whenever the screen comes into focus
-  // This ensures data is fresh after adding a new game
   useFocusEffect(
     useCallback(() => {
       fetchGameData();
-      // Optional: return a cleanup function if needed when the screen loses focus
       return () => { };
     }, [fetchGameData])
   );
 
-  // Helper function to generate CSV string from game data
-  const generateCSV = (data) => {
+  // Helper function to generate CSV string from COMBINED game data for main export
+  const generateCombinedGameCSV = (data) => {
     // Define CSV headers
     const headers = [
       "ID", "Played At", "Mobile Game", "Notes", "Difficulty", "Win/Loss",
@@ -153,24 +183,20 @@ function ViewResultsScreen({ navigation }) {
 
     // Map data to CSV rows
     const rows = data.map(game => {
-      // Concatenate spirits and aspects for CSV cell
       const spiritString = game.spirits
         .map(s => `${s.spirit_name}${s.aspect_name ? ` (${s.aspect_name})` : ''}`)
-        .join('; '); // Use semicolon to separate multiple spirits in one cell
+        .join('; ');
 
-      // Concatenate adversaries and levels for CSV cell
       const adversaryString = game.adversaries
         .map(a => `${a.name}${a.level !== null ? ` (L${a.level})` : ''}`)
         .join('; ');
 
-      // Concatenate scenarios for CSV cell
       const scenarioString = game.scenarios
         .map(s => s.name)
         .join('; ');
 
-      // Simple CSV escaping: wrap in quotes if field contains comma, quote, or newline.
-      // Double internal quotes.
-      const escapeCsvField = (field) => {
+      // Simple CSV escaping (using the helper for consistency now)
+      const escape = (field) => {
         if (field === null || field === undefined) return '';
         let str = String(field);
         if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes(';')) {
@@ -181,7 +207,7 @@ function ViewResultsScreen({ navigation }) {
 
       return [
         game.id,
-        new Date(game.played_at).toISOString(), // Use ISO string for consistent date format
+        new Date(game.played_at).toISOString(),
         game.mobile_game ? "Yes" : "No",
         game.notes,
         game.difficulty,
@@ -193,62 +219,101 @@ function ViewResultsScreen({ navigation }) {
         spiritString,
         adversaryString,
         scenarioString,
-      ].map(escapeCsvField).join(','); // Join fields with comma
+      ].map(escape).join(',');
     });
 
-    return [headers.join(','), ...rows].join('\n'); // Join header and data rows with newline
+    return [headers.map(escape).join(','), ...rows].join('\n');
   };
 
-  // Function to export data as CSV file
+  // Function to export combined data as CSV file
   const exportToCSV = async () => {
     if (gameData.length === 0) {
       Alert.alert("No Data", "There are no game results to export.");
       return;
     }
-    setExporting(true); // Disable button
+    setExporting(true);
     try {
-      const csvString = generateCSV(gameData);
+      const csvString = generateCombinedGameCSV(gameData);
       const filename = `SpiritIslandResults_${Date.now()}.csv`;
-      const fileUri = FileSystem.cacheDirectory + filename; // Store in app's cache directory
+      const fileUri = FileSystem.cacheDirectory + filename;
 
-      // Write the CSV string to a file
       const file = new FileSystem.File(fileUri);
       await file.writeAsStringAsync(csvString, { encoding: FileSystem.EncodingType.UTF8 });
 
-      // Check if sharing is available on the device
       if (!(await Sharing.isAvailableAsync())) {
         Alert.alert("Sharing not available", "Sharing is not available on your device. You can still copy to clipboard.");
         return;
       }
 
-      // Share the file
       await Sharing.shareAsync(fileUri, {
         mimeType: 'text/csv',
         dialogTitle: 'Share Spirit Island Results CSV',
-        UTI: 'public.comma-separated-values' // Recommended for iOS CSV files
+        UTI: 'public.comma-separated-values'
       });
       Alert.alert("Export Successful", "CSV file exported and shared.");
     } catch (error) {
       console.error("Error exporting CSV:", error);
       Alert.alert("Export Failed", `Could not export CSV: ${error.message}`);
     } finally {
-      setExporting(false); // Re-enable button
+      setExporting(false);
     }
   };
 
-  // Function to copy data as CSV to clipboard
-  const copyToClipboard = async () => {
+  // Function to copy combined data as CSV to clipboard
+  const copyCombinedToClipboard = async () => {
     if (gameData.length === 0) {
       Alert.alert("No Data", "There are no game results to copy.");
       return;
     }
     try {
-      const csvString = generateCSV(gameData);
+      const csvString = generateCombinedGameCSV(gameData);
       await Clipboard.setStringAsync(csvString);
-      Alert.alert("Copied to Clipboard", "Game results copied as CSV to clipboard.");
+      Alert.alert("Copied to Clipboard", "Combined game results copied as CSV to clipboard.");
     } catch (error) {
       console.error("Error copying to clipboard:", error);
       Alert.alert("Copy Failed", `Could not copy to clipboard: ${error.message}`);
+    }
+  };
+
+  // --- NEW: Copy games_dim data to clipboard ---
+  const copyGamesDimToClipboard = async () => {
+    if (!db) { Alert.alert("Error", "Database not initialized."); return; }
+    setCopyingRaw(true);
+    try {
+      const result = await db.getAllAsync(`SELECT * FROM games_dim;`);
+      if (result.length === 0) {
+        Alert.alert("No Data", "No games found in games_dim to copy.");
+        return;
+      }
+      const csvString = generateCsvFromObjects(result);
+      await Clipboard.setStringAsync(csvString);
+      Alert.alert("Copied", "Raw games_dim data copied to clipboard.");
+    } catch (error) {
+      console.error("Error copying games_dim:", error);
+      Alert.alert("Error", `Failed to copy games_dim: ${error.message}`);
+    } finally {
+      setCopyingRaw(false);
+    }
+  };
+
+  // --- NEW: Copy events_dim data to clipboard ---
+  const copyEventsDimToClipboard = async () => {
+    if (!db) { Alert.alert("Error", "Database not initialized."); return; }
+    setCopyingRaw(true);
+    try {
+      const result = await db.getAllAsync(`SELECT * FROM events_dim;`);
+      if (result.length === 0) {
+        Alert.alert("No Data", "No events found in events_dim to copy.");
+        return;
+      }
+      const csvString = generateCsvFromObjects(result);
+      await Clipboard.setStringAsync(csvString);
+      Alert.alert("Copied", "Raw events_dim data copied to clipboard.");
+    } catch (error) {
+      console.error("Error copying events_dim:", error);
+      Alert.alert("Error", `Failed to copy events_dim: ${error.message}`);
+    } finally {
+      setCopyingRaw(false);
     }
   };
 
@@ -263,30 +328,44 @@ function ViewResultsScreen({ navigation }) {
 
   return (
     <View style={styles.screenContainer}>
-      <Text style={styles.headerTitle}>My Spirit Island Results</Text>
+      {/* Moved header title to App.js */}
 
       <View style={styles.buttonContainer}>
         <Button
-          title={exporting ? "Exporting..." : "Export as CSV"}
+          title={exporting ? "Exporting..." : "Export All Games CSV"}
           onPress={exportToCSV}
-          disabled={exporting || gameData.length === 0} // Disable if exporting or no data
+          disabled={exporting || gameData.length === 0}
         />
         <Button
-          title="Copy to Clipboard"
-          onPress={copyToClipboard}
-          disabled={gameData.length === 0} // Disable if no data
+          title="Copy All Games CSV"
+          onPress={copyCombinedToClipboard}
+          disabled={gameData.length === 0}
+        />
+        <Button
+          title={copyingRaw ? "Copying..." : "Copy games_dim CSV"}
+          onPress={copyGamesDimToClipboard}
+          disabled={copyingRaw}
+        />
+        <Button
+          title={copyingRaw ? "Copying..." : "Copy events_dim CSV"}
+          onPress={copyEventsDimToClipboard}
+          disabled={copyingRaw}
+        />
+        <Button
+          title="Add New Game"
+          onPress={() => navigation.navigate('AddGameTab')} // Use 'AddGameTab' to navigate to the tab
         />
       </View>
 
       {gameData.length === 0 ? (
         <View style={styles.centeredContainer}>
           <Text style={styles.noDataText}>No games recorded yet. Add a new game!</Text>
-          <Button title="Add First Game" onPress={() => navigation.navigate('AddGame')} />
+          <Button title="Add First Game" onPress={() => navigation.navigate('AddGameTab')} />
         </View>
       ) : (
         <FlatList
           data={gameData}
-          keyExtractor={(item) => item.id.toString()} // Unique key for each item
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => <GameItem game={item} />}
           contentContainerStyle={styles.listContentContainer}
         />
@@ -299,7 +378,7 @@ const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
     padding: 10,
-    backgroundColor: '#f0f4f7', // Light background color
+    backgroundColor: '#f0f4f7',
   },
   centeredContainer: {
     flex: 1,
@@ -307,23 +386,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginVertical: 15,
-    color: '#2c3e50', // Darker text for titles
-  },
+  // headerTitle: { // Removed from here as it's now in App.js
+  //   fontSize: 24,
+  //   fontWeight: 'bold',
+  //   textAlign: 'center',
+  //   marginVertical: 15,
+  //   color: '#2c3e50',
+  // },
   buttonContainer: {
+    // Adjusted to allow more buttons and wrap if needed
     flexDirection: 'row',
+    flexWrap: 'wrap', // Allow buttons to wrap to next line
     justifyContent: 'space-around',
     marginBottom: 20,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd', // Separator line
+    borderBottomColor: '#ddd',
   },
   listContentContainer: {
-    paddingBottom: 20, // Add some padding at the bottom of the scrollable list
+    paddingBottom: 20,
   },
   gameItemContainer: {
     backgroundColor: '#ffffff',
@@ -331,12 +412,12 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#e0e0e0', // Light border
+    borderColor: '#e0e0e0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 3, // Android shadow
+    elevation: 3,
   },
   gameItemTitle: {
     fontSize: 18,
@@ -347,7 +428,7 @@ const styles = StyleSheet.create({
   detailSection: {
     marginTop: 8,
     borderLeftWidth: 3,
-    borderLeftColor: '#3498db', // A distinct color for details
+    borderLeftColor: '#3498db',
     paddingLeft: 10,
   },
   detailTitle: {
