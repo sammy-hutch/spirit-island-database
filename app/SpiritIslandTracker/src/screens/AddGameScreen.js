@@ -364,7 +364,7 @@ function AddGameScreen({ navigation }) {
         ]
       );
 
-      const game_id = gameInsertResult.lastInsertId;
+      const game_id = gameInsertResult.lastInsertRowId;
       console.log('Game inserted with ID:', game_id);
 
       // 2. Insert into events_dim for each spirit

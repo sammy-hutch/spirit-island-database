@@ -49,7 +49,7 @@ const initializeDatabase = async () => {
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS events_dim (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      game_id INTEGER,
+      game_id INTEGER NOT NULL,
       spirit_name TEXT NOT NULL,
       aspect_name TEXT,
       FOREIGN KEY (game_id) REFERENCES games_dim(id) ON DELETE CASCADE
