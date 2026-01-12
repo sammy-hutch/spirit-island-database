@@ -3,10 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import * as SQLite from 'expo-sqlite';
-
-// --- NEW IMPORTS ---
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import * as SQLite from 'expo-sqlite';
 
 // Import your screen components
 import AddGameScreen from './src/screens/AddGameScreen';
@@ -106,13 +105,11 @@ const populateMasterData = async () => {
   }
 };
 
-// --- New AppContent Component ---
-// This component will be wrapped by SafeAreaProvider in App()
-// It allows us to use useSafeAreaInsets hook correctly.
+// AppContent component
 function AppContent() {
   const [dbInitialized, setDbInitialized] = useState(false);
   const [error, setError] = useState(null);
-  const insets = useSafeAreaInsets(); // <-- Use the hook here!
+  const insets = useSafeAreaInsets(); // Use the hook here!
 
   useEffect(() => {
     const setupDatabase = async () => {
@@ -152,6 +149,15 @@ function AppContent() {
         initialRouteName="AddGameTab"
         screenOptions={({ route }) => ({
           headerShown: true,
+          // --- NEW: Global Header Title ---
+          headerTitle: 'Spirit Island Game Tracker',
+          // --- Optional: Header Title Styling ---
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 20,
+            color: '#333', // Darker color for the title
+          },
+          // ------------------------------------
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
             if (route.name === 'AddGameTab') {
@@ -164,9 +170,8 @@ function AppContent() {
           tabBarActiveTintColor: 'tomato',
           tabBarInactiveTintColor: 'gray',
           tabBarStyle: {
-            // Adjust height to account for safe area and base height
             height: 60 + insets.bottom,
-            paddingBottom: insets.bottom, // <-- IMPORTANT: Apply safe area padding here
+            paddingBottom: insets.bottom,
           },
           tabBarLabelStyle: { fontSize: 12 },
         })}
@@ -175,16 +180,16 @@ function AppContent() {
           name="AddGameTab"
           component={AddGameScreen}
           options={{
-            title: 'Record Game',
-            tabBarLabel: 'Record Game',
+            // title: 'Record Game', // REMOVE this, as headerTitle in screenOptions overrides it
+            tabBarLabel: 'Record Game', // Keep this for the tab bar label
           }}
         />
         <Tab.Screen
           name="ViewResultsTab"
           component={ViewResultsScreen}
           options={{
-            title: 'View Results',
-            tabBarLabel: 'View Results',
+            // title: 'View Results', // REMOVE this
+            tabBarLabel: 'View Results', // Keep this for the tab bar label
           }}
         />
       </Tab.Navigator>
@@ -192,7 +197,7 @@ function AppContent() {
   );
 }
 
-// --- Original App Component now wraps AppContent with SafeAreaProvider ---
+// Original App Component now wraps AppContent with SafeAreaProvider
 export default function App() {
   return (
     <SafeAreaProvider>
