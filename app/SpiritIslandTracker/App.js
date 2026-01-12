@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as SQLite from 'expo-sqlite';
 import AddGameScreen from './src/screens/AddGameScreen';
+import ViewResultsScreen from './src/screens/ViewResultsScreen';
 
 // -------------------------------------------------------------------
 
