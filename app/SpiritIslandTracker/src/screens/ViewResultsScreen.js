@@ -16,7 +16,7 @@ import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 import { db } from '../../App';
 
-// Helper component to render a single game item in the FlatList
+// ... (GameItem component - UNCHANGED)
 const GameItem = ({ game }) => (
   <View style={styles.gameItemContainer}>
     <Text style={styles.gameItemTitle}>Game ID: {game.id} - {new Date(game.played_at).toLocaleDateString()}</Text>
@@ -24,7 +24,6 @@ const GameItem = ({ game }) => (
     {game.mobile_game ? <Text>Played on Mobile</Text> : null}
     {game.notes ? <Text>Notes: {game.notes}</Text> : null}
 
-    {/* Display Spirits and Aspects */}
     {game.spirits && game.spirits.length > 0 && (
       <View style={styles.detailSection}>
         <Text style={styles.detailTitle}>Spirits:</Text>
@@ -36,7 +35,6 @@ const GameItem = ({ game }) => (
       </View>
     )}
 
-    {/* Display Adversaries and Levels */}
     {game.adversaries && game.adversaries.length > 0 && (
       <View style={styles.detailSection}>
         <Text style={styles.detailTitle}>Adversaries:</Text>
@@ -48,7 +46,6 @@ const GameItem = ({ game }) => (
       </View>
     )}
 
-    {/* Display Scenarios */}
     {game.scenarios && game.scenarios.length > 0 && (
       <View style={styles.detailSection}>
         <Text style={styles.detailTitle}>Scenarios:</Text>
@@ -60,28 +57,22 @@ const GameItem = ({ game }) => (
       </View>
     )}
 
-    {/* Display Game Score Data details */}
     <Text style={styles.scoreDetails}>
       Invader Cards: {game.invader_cards}, Dahan Health: {game.dahan_spirit}, Blight: {game.blight_spirit}
     </Text>
   </View>
 );
 
-// --- NEW GENERIC CSV GENERATION HELPER ---
 const generateCsvFromObjects = (dataArray) => {
   if (!dataArray || dataArray.length === 0) {
     return "";
   }
 
-  // Get headers from the keys of the first object
   const headers = Object.keys(dataArray[0]);
 
-  // CSV escape function
   const escapeCsvField = (field) => {
     if (field === null || field === undefined) return '';
     let str = String(field);
-    // If the string contains comma, double-quote, or newline,
-    // enclose it in double-quotes and escape internal double-quotes.
     if (str.includes(',') || str.includes('"') || str.includes('\n')) {
       return `"${str.replace(/"/g, '""')}"`;
     }
@@ -95,13 +86,13 @@ const generateCsvFromObjects = (dataArray) => {
 
   return [headerRow, ...dataRows].join('\n');
 };
-// --- END NEW GENERIC CSV GENERATION HELPER ---
 
 function ViewResultsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [gameData, setGameData] = useState([]);
   const [exporting, setExporting] = useState(false);
-  const [copyingRaw, setCopyingRaw] = useState(false); // To disable raw copy buttons during operation
+  const [copyingRaw, setCopyingRaw] = useState(false);
+  const [updatingMasterData, setUpdatingMasterData] = useState(false); // <-- NEW STATE
 
   const fetchGameData = useCallback(async () => {
     if (!db) {
@@ -111,7 +102,6 @@ function ViewResultsScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      // 1. Fetch all games from games_dim
       const games = await db.getAllAsync(
         `SELECT id, played_at, mobile_game, notes, difficulty, win_loss,
               invader_cards, dahan_spirit, blight_spirit, total_score,
@@ -119,20 +109,15 @@ function ViewResultsScreen({ navigation }) {
               scenario_1_name, scenario_2_name
        FROM games_dim ORDER BY played_at DESC;`
       );
-      // console.log('Fetched base game data:', games.map(g => ({ id: g.id, score: g.total_score }))); // DEBUG LOG
 
       const combinedData = [];
 
-      // 2. For each game, fetch its associated spirits from events_dim
       for (const game of games) {
-        // console.log(`Attempting to fetch spirits for game ID: ${game.id}`); // DEBUG LOG
         const spirits = await db.getAllAsync(
           `SELECT spirit_name, aspect_name FROM events_dim WHERE game_id = ?;`,
           [game.id]
         );
-        // console.log(`Fetched spirits for game ID ${game.id}:`, spirits); // DEBUG LOG
 
-        // 3. Process adversaries and scenarios (these are stored directly in games_dim)
         const adversaries = [];
         if (game.adversary_1_name) {
           adversaries.push({ name: game.adversary_1_name, level: game.adversary_1_level });
@@ -172,16 +157,13 @@ function ViewResultsScreen({ navigation }) {
     }, [fetchGameData])
   );
 
-  // Helper function to generate CSV string from COMBINED game data for main export
   const generateCombinedGameCSV = (data) => {
-    // Define CSV headers
     const headers = [
       "ID", "Played At", "Mobile Game", "Notes", "Difficulty", "Win/Loss",
       "Invader Cards", "Dahan Health", "Blight on Boards", "Total Score",
       "Spirits (Aspects)", "Adversaries (Levels)", "Scenarios"
     ];
 
-    // Map data to CSV rows
     const rows = data.map(game => {
       const spiritString = game.spirits
         .map(s => `${s.spirit_name}${s.aspect_name ? ` (${s.aspect_name})` : ''}`)
@@ -195,7 +177,6 @@ function ViewResultsScreen({ navigation }) {
         .map(s => s.name)
         .join('; ');
 
-      // Simple CSV escaping (using the helper for consistency now)
       const escape = (field) => {
         if (field === null || field === undefined) return '';
         let str = String(field);
@@ -225,7 +206,6 @@ function ViewResultsScreen({ navigation }) {
     return [headers.map(escape).join(','), ...rows].join('\n');
   };
 
-  // Function to export combined data as CSV file
   const exportToCSV = async () => {
     if (gameData.length === 0) {
       Alert.alert("No Data", "There are no game results to export.");
@@ -259,7 +239,6 @@ function ViewResultsScreen({ navigation }) {
     }
   };
 
-  // Function to copy combined data as CSV to clipboard
   const copyCombinedToClipboard = async () => {
     if (gameData.length === 0) {
       Alert.alert("No Data", "There are no game results to copy.");
@@ -275,7 +254,6 @@ function ViewResultsScreen({ navigation }) {
     }
   };
 
-  // --- NEW: Copy games_dim data to clipboard ---
   const copyGamesDimToClipboard = async () => {
     if (!db) { Alert.alert("Error", "Database not initialized."); return; }
     setCopyingRaw(true);
@@ -296,7 +274,6 @@ function ViewResultsScreen({ navigation }) {
     }
   };
 
-  // --- NEW: Copy events_dim data to clipboard ---
   const copyEventsDimToClipboard = async () => {
     if (!db) { Alert.alert("Error", "Database not initialized."); return; }
     setCopyingRaw(true);
@@ -317,6 +294,94 @@ function ViewResultsScreen({ navigation }) {
     }
   };
 
+  // --- NEW: Google Sheet URLs (REPLACE WITH YOUR ACTUAL PUBLISHED CSV URLs) ---
+  const googleSheetUrls = {
+    spirit: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmauLev0j_IiP22IosD2M0zWZbNiHq_Rmd6Si9tbV5gvet_OZkhP0wuL60ukPHJ8ysoAjHTNaqlug-/pub?gid=1094958888&single=true&output=csv",
+    adversary: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmauLev0j_IiP22IosD2M0zWZbNiHq_Rmd6Si9tbV5gvet_OZkhP0wuL60ukPHJ8ysoAjHTNaqlug-/pub?gid=610878563&single=true&output=csv",
+    scenario: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmauLev0j_IiP22IosD2M0zWZbNiHq_Rmd6Si9tbV5gvet_OZkhP0wuL60ukPHJ8ysoAjHTNaqlug-/pub?gid=1993883548&single=true&output=csv",
+    aspect: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmauLev0j_IiP22IosD2M0zWZbNiHq_Rmd6Si9tbV5gvet_OZkhP0wuL60ukPHJ8ysoAjHTNaqlug-/pub?gid=101851110&single=true&output=csv",
+  };
+  // --- END NEW URLs ---
+
+  // --- NEW: Function to update master data from Google Sheets ---
+  const handleUpdateMasterData = async () => {
+    if (!db) {
+      Alert.alert("Error", "Database not initialized. Please restart the app.");
+      return;
+    }
+    setUpdatingMasterData(true);
+    try {
+      await db.execAsync('BEGIN TRANSACTION;'); // Start SQLite transaction
+
+      for (const type in googleSheetUrls) {
+        const url = googleSheetUrls[type];
+        if (!url) {
+          console.warn(`Skipping update for type '${type}': URL is missing.`);
+          continue; // Skip if URL is not set
+        }
+
+        console.log(`Fetching ${type} data from: ${url}`);
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status} for ${type} data.`);
+        }
+        const csvString = await response.text();
+        const rows = csvString.split('\n').map(row => row.trim()).filter(Boolean);
+
+        if (rows.length === 0) {
+          console.warn(`No data found in CSV for type: ${type}`);
+          continue;
+        }
+
+        // Assuming first row is header, and data starts from second row
+        const dataRows = rows.slice(1);
+
+        // Delete old data for this type
+        await db.runAsync(`DELETE FROM master_data WHERE type = ?;`, [type]);
+        console.log(`Deleted old '${type}' data.`);
+
+        for (const row of dataRows) {
+          const values = row.split(',').map(v => v.trim()); // Simple split, assumes no commas within fields
+
+          if (type === 'aspect') {
+            // For aspects, expect `name,related_spirit`
+            if (values.length < 2 || !values[0] || !values[1]) {
+              console.warn(`Skipping malformed aspect row: "${row}"`);
+              continue;
+            }
+            await db.runAsync(
+              `INSERT INTO master_data (type, name, related_spirit) VALUES (?, ?, ?);`,
+              [type, values[0], values[1]]
+            );
+          } else {
+            // For other types, expect `name`
+            if (values.length < 1 || !values[0]) {
+              console.warn(`Skipping malformed ${type} row: "${row}"`);
+              continue;
+            }
+            await db.runAsync(
+              `INSERT INTO master_data (type, name) VALUES (?, ?);`,
+              [type, values[0]]
+            );
+          }
+        }
+        console.log(`Inserted ${dataRows.length} '${type}' records.`);
+      }
+
+      await db.execAsync('COMMIT;'); // Commit if all successful
+      Alert.alert("Success", "Master data updated from Google Sheets!");
+      // Optionally trigger re-fetch of game data if the display depends on master data
+      // For now, we only need AddGameScreen to refresh its dropdowns.
+    } catch (error) {
+      await db.execAsync('ROLLBACK;'); // Rollback on any error
+      console.error("Error updating master data:", error);
+      Alert.alert("Update Failed", `Failed to update master data: ${error.message}`);
+    } finally {
+      setUpdatingMasterData(false);
+    }
+  };
+  // --- END NEW UPDATE FUNCTION ---
+
   if (loading) {
     return (
       <View style={styles.centeredContainer}>
@@ -328,8 +393,6 @@ function ViewResultsScreen({ navigation }) {
 
   return (
     <View style={styles.screenContainer}>
-      {/* Moved header title to App.js */}
-
       <View style={styles.buttonContainer}>
         <Button
           title={exporting ? "Exporting..." : "Export All Games CSV"}
@@ -351,9 +414,16 @@ function ViewResultsScreen({ navigation }) {
           onPress={copyEventsDimToClipboard}
           disabled={copyingRaw}
         />
+        {/* --- NEW BUTTON: Update Master Data --- */}
+        <Button
+          title={updatingMasterData ? "Updating..." : "Update Master Data"}
+          onPress={handleUpdateMasterData}
+          disabled={updatingMasterData}
+        />
+        {/* --- END NEW BUTTON --- */}
         <Button
           title="Add New Game"
-          onPress={() => navigation.navigate('AddGameTab')} // Use 'AddGameTab' to navigate to the tab
+          onPress={() => navigation.navigate('AddGameTab')}
         />
       </View>
 
@@ -386,17 +456,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  // headerTitle: { // Removed from here as it's now in App.js
-  //   fontSize: 24,
-  //   fontWeight: 'bold',
-  //   textAlign: 'center',
-  //   marginVertical: 15,
-  //   color: '#2c3e50',
-  // },
   buttonContainer: {
-    // Adjusted to allow more buttons and wrap if needed
     flexDirection: 'row',
-    flexWrap: 'wrap', // Allow buttons to wrap to next line
+    flexWrap: 'wrap',
     justifyContent: 'space-around',
     marginBottom: 20,
     paddingVertical: 10,

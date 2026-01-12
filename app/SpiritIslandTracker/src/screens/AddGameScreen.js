@@ -1,5 +1,5 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+// src/screens/AddGameScreen.js
+import React, { useState, useCallback } from 'react'; // ADD useCallback to imports
 import {
   View,
   Text,
@@ -11,16 +11,18 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
 } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
+import { useFocusEffect } from '@react-navigation/native'; // <-- NEW IMPORT
+
 import { db } from '../../App';
 
-// Helper component for a single Spirit/Aspect entry
+// ... (SpiritEntry, AdversaryEntry, ScenarioEntry components - UNCHANGED)
 const SpiritEntry = ({
   index,
   spiritOptions,
-  allAspectsMap, // Map: { 'SpiritName': [{label, value}, ...] }
+  allAspectsMap,
   selectedSpirit,
   selectedAspect,
   onSpiritChange,
@@ -28,7 +30,6 @@ const SpiritEntry = ({
   onRemove,
   canRemove,
 }) => {
-  // Filter aspects based on the currently selected spirit for this entry
   const availableAspects = selectedSpirit
     ? allAspectsMap[selectedSpirit] || []
     : [];
@@ -51,20 +52,19 @@ const SpiritEntry = ({
         value={selectedAspect}
         placeholder={{ label: 'Select Aspect...', value: null }}
         style={pickerSelectStyles}
-        disabled={!selectedSpirit} // Disable aspect picker if no spirit is selected
+        disabled={!selectedSpirit}
       />
       {canRemove && (
         <Button
           title="Remove Spirit"
           onPress={() => onRemove(index)}
-          color="#FF6347" // Tomato color for remove button
+          color="#FF6347"
         />
       )}
     </View>
   );
 };
 
-// Helper component for a single Adversary/Level entry
 const AdversaryEntry = ({
   index,
   adversaryOptions,
@@ -90,7 +90,7 @@ const AdversaryEntry = ({
         placeholder={{ label: 'Select Adversary...', value: null }}
         style={pickerSelectStyles}
       />
-      {selectedAdversary && ( // Only show level if an adversary is selected
+      {selectedAdversary && (
         <>
           <Text style={styles.entryLabel}>Adversary Level:</Text>
           <RNPickerSelect
@@ -113,7 +113,6 @@ const AdversaryEntry = ({
   );
 };
 
-// Helper component for a single Scenario entry
 const ScenarioEntry = ({
   index,
   scenarioOptions,
@@ -142,6 +141,7 @@ const ScenarioEntry = ({
     </View>
   );
 };
+// ... (End of helper components)
 
 function AddGameScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
@@ -149,23 +149,22 @@ function AddGameScreen({ navigation }) {
     spiritOptions: [],
     adversaryOptions: [],
     scenarioOptions: [],
-    allAspectsMap: {}, // Map: { 'SpiritName': [{label, value}, ...] }
+    allAspectsMap: {},
   });
 
   const [formData, setFormData] = useState({
     mobileGame: false,
     notes: '',
     difficulty: '',
-    winLoss: null, // 'Win' or 'Loss'
+    winLoss: null,
     invaderCards: '',
     dahanSpirit: '',
     blightSpirit: '',
-    spirits: [{ name: null, aspect: null }], // Start with one spirit entry
-    adversaries: [], // Start with no adversaries
-    scenarios: [], // Start with no scenarios
+    spirits: [{ name: null, aspect: null }],
+    adversaries: [],
+    scenarios: [],
   });
 
-  // Calculate Total Score (memoized to avoid re-calculation on every render)
   const totalScore = useCallback(() => {
     const d = parseInt(formData.difficulty || 0);
     const ic = parseInt(formData.invaderCards || 0);
@@ -174,52 +173,58 @@ function AddGameScreen({ navigation }) {
     return d + ic + ds + bs;
   }, [formData.difficulty, formData.invaderCards, formData.dahanSpirit, formData.blightSpirit]);
 
-  useEffect(() => {
-    const fetchMasterData = async () => {
-      try {
-        if (!db) {
-          Alert.alert("Error", "Database not initialized. Please restart the app.");
-          setLoading(false);
-          return;
-        }
+  // --- MODIFIED: fetchMasterData is now a useCallback and triggered by useFocusEffect ---
+  const fetchMasterData = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (!db) {
+        Alert.alert("Error", "Database not initialized. Please restart the app.");
+        setLoading(false);
+        return;
+      }
 
-        // Fetch Spirits
-        const spiritsResult = await db.getAllAsync(`SELECT name FROM master_data WHERE type = 'spirit' ORDER BY name ASC;`);
-        const spiritOptions = spiritsResult.map(row => ({ label: row.name, value: row.name }));
+      const spiritsResult = await db.getAllAsync(`SELECT name FROM master_data WHERE type = 'spirit' ORDER BY name ASC;`);
+      const spiritOptions = spiritsResult.map(row => ({ label: row.name, value: row.name }));
 
-        // Fetch Adversaries
-        const adversariesResult = await db.getAllAsync(`SELECT name FROM master_data WHERE type = 'adversary' ORDER BY name ASC;`);
-        const adversaryOptions = adversariesResult.map(row => ({ label: row.name, value: row.name }));
+      const adversariesResult = await db.getAllAsync(`SELECT name FROM master_data WHERE type = 'adversary' ORDER BY name ASC;`);
+      const adversaryOptions = adversariesResult.map(row => ({ label: row.name, value: row.name }));
 
-        // Fetch Scenarios
-        const scenariosResult = await db.getAllAsync(`SELECT name FROM master_data WHERE type = 'scenario' ORDER BY name ASC;`);
-        const scenarioOptions = scenariosResult.map(row => ({ label: row.name, value: row.name }));
+      const scenariosResult = await db.getAllAsync(`SELECT name FROM master_data WHERE type = 'scenario' ORDER BY name ASC;`);
+      const scenarioOptions = scenariosResult.map(row => ({ label: row.name, value: row.name }));
 
-        // Fetch Aspects and map them to spirits
-        const aspectsResult = await db.getAllAsync(`SELECT name, related_spirit FROM master_data WHERE type = 'aspect';`);
-        const allAspectsMap = aspectsResult.reduce((acc, row) => {
+      const aspectsResult = await db.getAllAsync(`SELECT name, related_spirit FROM master_data WHERE type = 'aspect';`);
+      const allAspectsMap = aspectsResult.reduce((acc, row) => {
+        if (row.related_spirit) { // Ensure there's a related spirit
           if (!acc[row.related_spirit]) {
             acc[row.related_spirit] = [];
           }
           acc[row.related_spirit].push({ label: row.name, value: row.name });
-          return acc;
-        }, {});
+        }
+        return acc;
+      }, {});
 
-        setMasterData({
-          spiritOptions,
-          adversaryOptions,
-          scenarioOptions,
-          allAspectsMap,
-        });
-      } catch (error) {
-        console.error("Error fetching master data:", error);
-        Alert.alert("Error", "Could not load game setup data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMasterData();
-  }, []);
+      setMasterData({
+        spiritOptions,
+        adversaryOptions,
+        scenarioOptions,
+        allAspectsMap,
+      });
+    } catch (error) {
+      console.error("Error fetching master data:", error);
+      Alert.alert("Error", "Could not load game setup data.");
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Dependencies: empty array, as db is a global constant
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMasterData();
+      // Optional cleanup
+      return () => { };
+    }, [fetchMasterData])
+  );
+  // --- END MODIFIED fetchMasterData ---
 
   const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -244,7 +249,7 @@ function AddGameScreen({ navigation }) {
   const handleSpiritChange = (index, value) => {
     setFormData(prev => {
       const newSpirits = [...prev.spirits];
-      newSpirits[index] = { name: value, aspect: null }; // Reset aspect when spirit changes
+      newSpirits[index] = { name: value, aspect: null };
       return { ...prev, spirits: newSpirits };
     });
   };
@@ -276,7 +281,7 @@ function AddGameScreen({ navigation }) {
   const handleAdversaryChange = (index, value) => {
     setFormData(prev => {
       const newAdversaries = [...prev.adversaries];
-      newAdversaries[index] = { name: value, level: null }; // Reset level when adversary changes
+      newAdversaries[index] = { name: value, level: null };
       return { ...prev, adversaries: newAdversaries };
     });
   };
@@ -293,7 +298,7 @@ function AddGameScreen({ navigation }) {
     if (formData.scenarios.length < 2) {
       setFormData(prev => ({
         ...prev,
-        scenarios: [...prev.scenarios, null], // Store just the name
+        scenarios: [...prev.scenarios, null],
       }));
     }
   };
@@ -319,7 +324,6 @@ function AddGameScreen({ navigation }) {
       return;
     }
 
-    // Basic Validation
     if (!formData.winLoss) {
       Alert.alert("Validation Error", "Please select Win or Loss.");
       return;
@@ -328,7 +332,6 @@ function AddGameScreen({ navigation }) {
       Alert.alert("Validation Error", "Please add at least one spirit.");
       return;
     }
-    // Check that all selected adversaries have a level if selected
     for (const adv of formData.adversaries) {
       if (adv.name && adv.level === null) {
         Alert.alert("Validation Error", `Please select a level for ${adv.name}.`);
@@ -339,7 +342,6 @@ function AddGameScreen({ navigation }) {
     try {
       const calculatedScore = totalScore();
 
-      // 1. Insert into games_dim
       const gameInsertResult = await db.runAsync(
         `INSERT INTO games_dim (
         mobile_game, notes, difficulty, win_loss, invader_cards, dahan_spirit, blight_spirit, total_score,
@@ -347,7 +349,7 @@ function AddGameScreen({ navigation }) {
         scenario_1_name, scenario_2_name
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
-          formData.mobileGame ? 1 : 0, // SQLite stores BOOLEAN as INTEGER (0 or 1)
+          formData.mobileGame ? 1 : 0,
           formData.notes,
           parseInt(formData.difficulty || 0),
           formData.winLoss,
@@ -365,23 +367,25 @@ function AddGameScreen({ navigation }) {
       );
 
       const game_id = gameInsertResult.lastInsertRowId;
-      console.log('Game inserted with ID:', game_id);
 
-      // 2. Insert into events_dim for each spirit
+      if (!game_id) {
+        throw new Error("Failed to retrieve a valid game ID after inserting into games_dim.");
+      }
+
+      console.log('Game inserted into games_dim with ID:', game_id);
+
       for (const spiritEntry of formData.spirits) {
-        if (spiritEntry.name) { // Only insert if a spirit is actually selected
+        if (spiritEntry.name) {
           await db.runAsync(
             `INSERT INTO events_dim (game_id, spirit_name, aspect_name) VALUES (?, ?, ?);`,
             [game_id, spiritEntry.name, spiritEntry.aspect]
           );
+          console.log(`Inserted spirit "${spiritEntry.name}" (Aspect: ${spiritEntry.aspect || 'None'}) for game ID: ${game_id}`);
         }
       }
-      console.log('Spirit events inserted.');
+      console.log('All spirit events processed for game ID:', game_id);
 
       Alert.alert("Success", "Game results saved successfully!");
-      // Optionally navigate away or reset form
-      //navigation.goBack(); // Example: go back to previous screen
-      // Or reset form:
       setFormData({
         mobileGame: false, notes: '', difficulty: '', winLoss: null,
         invaderCards: '', dahanSpirit: '', blightSpirit: '',
@@ -390,7 +394,7 @@ function AddGameScreen({ navigation }) {
 
     } catch (error) {
       console.error("Error saving game results:", error);
-      Alert.alert("Error", "Failed to save game results. " + error.message);
+      Alert.alert("Error", `Failed to save game results: ${error.message}`);
     }
   };
 
@@ -488,7 +492,7 @@ function AddGameScreen({ navigation }) {
         <Text style={styles.sectionTitle}>Spirits Played ({formData.spirits.length} selected):</Text>
         {formData.spirits.map((spiritEntry, index) => (
           <SpiritEntry
-            key={index} // Using index as key is okay here since elements are not reordered often
+            key={index}
             index={index}
             spiritOptions={masterData.spiritOptions}
             allAspectsMap={masterData.allAspectsMap}
@@ -497,7 +501,7 @@ function AddGameScreen({ navigation }) {
             onSpiritChange={handleSpiritChange}
             onAspectChange={handleAspectChange}
             onRemove={removeSpiritEntry}
-            canRemove={formData.spirits.length > 1} // Can only remove if more than one spirit
+            canRemove={formData.spirits.length > 1}
           />
         ))}
         {formData.spirits.length < 6 && (
@@ -516,7 +520,7 @@ function AddGameScreen({ navigation }) {
             onAdversaryChange={handleAdversaryChange}
             onLevelChange={handleAdversaryLevelChange}
             onRemove={removeAdversaryEntry}
-            canRemove={formData.adversaries.length > 0} // Can always remove if present
+            canRemove={formData.adversaries.length > 0}
           />
         ))}
         {formData.adversaries.length < 2 && (
@@ -533,7 +537,7 @@ function AddGameScreen({ navigation }) {
             selectedScenario={scenarioName}
             onScenarioChange={handleScenarioChange}
             onRemove={removeScenarioEntry}
-            canRemove={formData.scenarios.length > 0} // Can always remove if present
+            canRemove={formData.scenarios.length > 0}
           />
         ))}
         {formData.scenarios.length < 2 && (

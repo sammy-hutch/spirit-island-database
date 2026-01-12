@@ -25,47 +25,73 @@ const initializeDatabase = async () => {
     console.log("WAL mode enabled.");
 
     await db.execAsync(
-      `CREATE TABLE IF NOT EXISTS games_dim (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      mobile_game BOOLEAN,
-      notes TEXT,
-      difficulty INTEGER,
-      win_loss TEXT, -- 'Win' or 'Loss'
-      invader_cards INTEGER,
-      dahan_spirit INTEGER,
-      blight_spirit INTEGER,
-      total_score INTEGER,
-      adversary_1_name TEXT,
-      adversary_1_level INTEGER,
-      adversary_2_name TEXT,
-      adversary_2_level INTEGER,
-      scenario_1_name TEXT,
-      scenario_2_name TEXT
-    );`
+      `CREATE TABLE IF NOT EXISTS games_fact (
+        game_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        game_difficulty INTEGER,
+        game_win INTEGER,
+        game_cards INTEGER,
+        game_dahan INTEGER,
+        game_blight INTEGER,
+        game_score INTEGER,
+        game_info TEXT
+      );`
     );
-    console.log("games_dim table created successfully or already exists.");
+    console.log("games_fact table created successfully or already exists.");
 
     await db.execAsync(
-      `CREATE TABLE IF NOT EXISTS events_dim (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      game_id INTEGER NOT NULL,
-      spirit_name TEXT NOT NULL,
-      aspect_name TEXT,
-      FOREIGN KEY (game_id) REFERENCES games_dim(id) ON DELETE CASCADE
-    );`
+      `CREATE TABLE IF NOT EXISTS events_fact (
+        event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        game_id INTEGER NOT NULL,
+        spirit_id INTEGER NOT NULL,
+        aspect_id INTEGER,
+        adversary_id INTEGER,
+        adversary_level INTEGER,
+        scenario_id INTEGER,
+        FOREIGN KEY (game_id) REFERENCES games_fact(game_id) ON DELETE CASCADE
+      );`
     );
-    console.log("events_dim table created successfully or already exists.");
+    console.log("events_fact table created successfully or already exists.");
 
     await db.execAsync(
-      `CREATE TABLE IF NOT EXISTS master_data (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      type TEXT NOT NULL, -- e.g., 'spirit', 'adversary', 'scenario', 'aspect'
-      name TEXT NOT NULL UNIQUE,
-      related_spirit TEXT -- For aspects, indicates which spirit it belongs to
-    );`
+      `CREATE TABLE IF NOT EXISTS spirits_dim (
+        spirit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        spirit_name TEXT NOT NULL UNIQUE,
+        complexity TEXT,
+        spirit_image TEXT,
+        nemesis_name TEXT
+      );`
     );
-    console.log("master_data table created successfully or already exists.");
+    console.log("spirits_dim table created successfully or already exists.");
+
+    await db.execAsync(
+      `CREATE TABLE IF NOT EXISTS aspects_dim (
+        aspect_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        aspect_name TEXT NOT NULL UNIQUE,
+        spirit_id INTEGER,
+        aspect_image TEXT
+      );`
+    );
+    console.log("aspects_dim table created successfully or already exists.");
+
+    await db.execAsync(
+      `CREATE TABLE IF NOT EXISTS adversaries_dim (
+        adversary_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        adversary_name TEXT NOT NULL UNIQUE,
+        adversary_image TEXT,
+        nemesis_name TEXT
+      );`
+    );
+    console.log("adversaries_dim table created successfully or already exists.");
+
+    await db.execAsync(
+      `CREATE TABLE IF NOT EXISTS scenarios_dim (
+        scenario_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        scenario_name TEXT NOT NULL UNIQUE,
+        scenario_difficulty INTEGER,
+        scenario_image TEXT
+      );`
+    );
+    console.log("scenarios_dim table created successfully or already exists.");
 
   } catch (error) {
     console.error("Error initializing database:", error);
@@ -74,48 +100,47 @@ const initializeDatabase = async () => {
 };
 
 // --- Initial Hardcoded Master Data Insertion (UNCHANGED) ---
-const populateMasterData = async () => {
-  if (!db) {
-    console.error("Database not initialized, cannot populate master data.");
-    return;
-  }
+// const populateMasterData = async () => {
+//   if (!db) {
+//     console.error("Database not initialized, cannot populate master data.");
+//     return;
+//   }
 
-  try {
-    // Spirits
-    await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name) VALUES ('spirit', 'Aching Blood'), ('spirit', 'Aerie of the Raucous Skies'), ('spirit', 'Bringer of Dreams and Nightmares'), ('spirit', 'Downpour Drenches the World');`);
-    // Adversaries
-    await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name) VALUES ('adversary', 'Brandenburg-Prussia'), ('adversary', 'England'), ('adversary', 'France');`);
-    // Scenarios
-    await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name) VALUES ('scenario', 'Blitz'), ('scenario', 'Dahan Insurrection'), ('scenario', 'Varied Terrains');`);
-    // Aspects (example: 'Sun-Bright Whirlwind' for 'Sharp Fangs Behind the Leaves')
-    // Note: 'related_spirit' links an aspect to a specific spirit.
-    await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name, related_spirit) VALUES ('aspect', 'Terrifying', 'Bringer of Dreams and Nightmares');`);
-    await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name, related_spirit) VALUES ('aspect', 'Numinous', 'Bringer of Dreams and Nightmares');`);
-    await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name, related_spirit) VALUES ('aspect', 'Locus', 'Downpour Drenches the World');`);
-    await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name, related_spirit) VALUES ('aspect', 'Tsunami', 'Downpour Drenches the World');`);
+//   try {
+//     // Spirits
+//     await db.runAsync(`INSERT OR IGNORE INTO spirits_dim (spirit_id, spirit_name, complexity, spirit_image, nemesis_name) VALUES (1, "Lightning's Swift Strike", "Low", "https://spiritislandwiki.com/images/thumb/c/c2/Lightning%27s_Swift_Strike.png/250px-Lightning%27s_Swift_Strike.png", "Thundercaps");`);
+//     // Adversaries
+//     await db.runAsync(`INSERT OR IGNORE INTO adversaries_dim (type, name) VALUES ('adversary', 'Brandenburg-Prussia'), ('adversary', 'England'), ('adversary', 'France');`);
+//     // Scenarios
+//     await db.runAsync(`INSERT OR IGNORE INTO scenarios_dim (type, name) VALUES ('scenario', 'Blitz'), ('scenario', 'Dahan Insurrection'), ('scenario', 'Varied Terrains');`);
+//     // Aspects (example: 'Sun-Bright Whirlwind' for 'Sharp Fangs Behind the Leaves')
+//     // Note: 'related_spirit' links an aspect to a specific spirit.
+//     await db.runAsync(`INSERT OR IGNORE INTO aspects_dim (type, name, related_spirit) VALUES ('aspect', 'Terrifying', 'Bringer of Dreams and Nightmares');`);
+//     await db.runAsync(`INSERT OR IGNORE INTO aspects_dim (type, name, related_spirit) VALUES ('aspect', 'Numinous', 'Bringer of Dreams and Nightmares');`);
+//     await db.runAsync(`INSERT OR IGNORE INTO aspects_dim (type, name, related_spirit) VALUES ('aspect', 'Locus', 'Downpour Drenches the World');`);
+//     await db.runAsync(`INSERT OR IGNORE INTO aspects_dim (type, name, related_spirit) VALUES ('aspect', 'Tsunami', 'Downpour Drenches the World');`);
 
-    // Additional sample aspects for other spirits to make dynamic filtering more obvious
-    await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name, related_spirit) VALUES ('aspect', 'Resilient', 'Aching Blood');`);
-    await db.runAsync(`INSERT OR IGNORE INTO master_data (type, name, related_spirit) VALUES ('aspect', 'Vengeful', 'Aching Blood');`);
-
-    console.log("Master data populated (or already exists).");
-  } catch (error) {
-    console.error("Master data transaction error:", error);
-    throw error;
-  }
-};
+//     // Additional sample aspects for other spirits to make dynamic filtering more obvious
+//     await db.runAsync(`INSERT OR IGNORE INTO aspects_dim (type, name, related_spirit) VALUES ('aspect', 'Resilient', 'Aching Blood');`);
+//     await db.runAsync(`INSERT OR IGNORE INTO aspects_dim (type, name, related_spirit) VALUES ('aspect', 'Vengeful', 'Aching Blood');`);
+//     console.log("Master data populated (or already exists).");
+//   } catch (error) {
+//     console.error("Master data transaction error:", error);
+//     throw error;
+//   }
+// };
 
 // AppContent component
 function AppContent() {
   const [dbInitialized, setDbInitialized] = useState(false);
   const [error, setError] = useState(null);
-  const insets = useSafeAreaInsets(); // Use the hook here!
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const setupDatabase = async () => {
       try {
         await initializeDatabase();
-        await populateMasterData();
+        // await populateMasterData();
         setDbInitialized(true);
       } catch (e) {
         console.error("Failed to initialize database:", e);
@@ -149,13 +174,11 @@ function AppContent() {
         initialRouteName="AddGameTab"
         screenOptions={({ route }) => ({
           headerShown: true,
-          // --- NEW: Global Header Title ---
           headerTitle: 'Spirit Island Game Tracker',
-          // --- Optional: Header Title Styling ---
           headerTitleStyle: {
             fontWeight: 'bold',
             fontSize: 20,
-            color: '#333', // Darker color for the title
+            color: '#333',
           },
           // ------------------------------------
           tabBarIcon: ({ focused, color, size }) => {
@@ -180,16 +203,14 @@ function AppContent() {
           name="AddGameTab"
           component={AddGameScreen}
           options={{
-            // title: 'Record Game', // REMOVE this, as headerTitle in screenOptions overrides it
-            tabBarLabel: 'Record Game', // Keep this for the tab bar label
+            tabBarLabel: 'Record Game',
           }}
         />
         <Tab.Screen
           name="ViewResultsTab"
           component={ViewResultsScreen}
           options={{
-            // title: 'View Results', // REMOVE this
-            tabBarLabel: 'View Results', // Keep this for the tab bar label
+            tabBarLabel: 'View Results',
           }}
         />
       </Tab.Navigator>
