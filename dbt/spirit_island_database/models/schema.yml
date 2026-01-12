@@ -1,0 +1,84 @@
+models:
+  #### ACCOLADES ####
+  - name: adversary_accolades
+    description: a model calculating a unique selection of accolades for adversaries, based on adversary_accolade_list.csv seed, and also bringing in the results of spirit_nemeses
+
+    columns:
+      - name: accolade_id
+        description: unique id for the accolade, in the format "adversary_accolade_[adversary_accolade_list.id]" or "spirit_nemesis_[spirit_id]"
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: accolade_name
+
+      - name: accolade_description
+        description: the condition required to achieve this accolade
+      
+      - name: accolade_recipient
+        description: the adversary which has been awarded this accolade
+
+
+  - name: adversary_nemeses
+    description: model calculating nemeses to the adversaries, i.e. which spirit performs best against each adversary
+
+    columns:
+      - name: accolade_id
+        description: unique id for the accolade, in the format "adversary_nemesis[adversary_id]"
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: accolade_name
+      
+      - name: accolade_description
+        description: the adversary which has been bested in this accolade, in the format "Nemesis to [adversary_name]" 
+
+      - name: accolade_recipient
+        description: the spirit which has been awarded this accolade
+
+
+  - name: spirit_accolades
+    description: a model calculating a unique selection of accolades for spirits, based on spirit_accolade_list.csv seed, and also bringing in the results of adversary_nemeses
+
+    columns:
+      - name: accolade_id
+        description: unique id for the accolade, in the format "spirit_accolade_[spirit_accolade_list.id]" or "adversary_nemesis_[adversary_id]"
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: accolade_name
+
+      - name: accolade_description
+        description: the condition required to achieve this accolade
+      
+      - name: accolade_recipient
+        description: the spirit which has been awarded this accolade
+
+
+  - name: spirit_nemeses
+    description: model calculating nemeses to the spirits, i.e. which adversary performs best against each spirit
+
+    columns:
+      - name: accolade_id
+        description: unique id for the accolade, in the format "spirit_nemesis_[spirit_id]"
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: accolade_name
+      
+      - name: accolade_description
+        description: the spirit which has been bested in this accolade, in the format "Nemesis to [spirit_name]"
+
+      - name: accolade_recipient
+        description: the adversary which has been awarded this accolade
+
+
+  #### STAGING ####
+  - name: nemeses_base
+    description: base model for adversary_nemeses and spirit_nemeses models, with shared calculation of spirit-adversary-event matrix and relevant metrics
+
+  - name: playtest_filter
+    description: model calculating which games were "playtests" (using custom spirits) and returning a list of thos game ids, so they can be filtered from other models (such as accolade models)
