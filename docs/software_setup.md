@@ -124,3 +124,28 @@ steps copied from [this page](https://sqlitebrowser.org/dl/)
 - Run ```sudo apt-get update```
 - Run ```sudo apt-get install sqlitebrowser```
 - You can open DB Browser for SQLite in Ubuntu with the following command: ```sqlitebrowser```
+
+
+## app setup
+
+Install npm
+```bash
+...
+```
+
+Install expo-cli
+```bash
+npm install -g expo-cli create-expo-app
+```
+
+## Testing app
+navigate to directory
+```bash
+cd app/SpiritIslandTracker
+```
+
+```bash
+npm run web
+```
+
+
