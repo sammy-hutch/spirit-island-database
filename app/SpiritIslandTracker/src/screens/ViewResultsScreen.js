@@ -92,7 +92,7 @@ function ViewResultsScreen({ navigation }) {
   const [gameData, setGameData] = useState([]);
   const [exporting, setExporting] = useState(false);
   const [copyingRaw, setCopyingRaw] = useState(false);
-  const [updatingMasterData, setUpdatingMasterData] = useState(false); // <-- NEW STATE
+  const [updatingMasterData, setUpdatingMasterData] = useState(false);
 
   const fetchGameData = useCallback(async () => {
     if (!db) {
@@ -103,36 +103,50 @@ function ViewResultsScreen({ navigation }) {
     setLoading(true);
     try {
       const games = await db.getAllAsync(
-        `SELECT id, played_at, mobile_game, notes, difficulty, win_loss,
-              invader_cards, dahan_spirit, blight_spirit, total_score,
-              adversary_1_name, adversary_1_level, adversary_2_name, adversary_2_level,
-              scenario_1_name, scenario_2_name
-       FROM games_dim ORDER BY played_at DESC;`
+        `SELECT game_id, game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, game_info
+         FROM games_fact ORDER BY game_id DESC;`
       );
 
       const combinedData = [];
 
       for (const game of games) {
         const spirits = await db.getAllAsync(
-          `SELECT spirit_name, aspect_name FROM events_dim WHERE game_id = ?;`,
-          [game.id]
+          `WITH event AS (
+            SELECT spirit_id, aspect_id FROM events_fact WHERE game_id = ? GROUP BY 1,2
+          )
+          SELECT 
+            sd.spirit_name, 
+            ad.aspect_name
+          FROM event e 
+          LEFT JOIN spirit_dim sd ON e.spirit_id = sd.spirit_id
+          LEFT JOIN aspect_dim ad ON e.aspect_id = ad.aspect_id
+          ;`,
+          [game.game_id]
         );
 
-        const adversaries = [];
-        if (game.adversary_1_name) {
-          adversaries.push({ name: game.adversary_1_name, level: game.adversary_1_level });
-        }
-        if (game.adversary_2_name) {
-          adversaries.push({ name: game.adversary_2_name, level: game.adversary_2_level });
-        }
+        const adversaries = await db.getAllAsync(
+          `WITH event AS (
+            SELECT adversary_id FROM events_fact WHERE game_id = ? GROUP BY 1
+          )
+          SELECT  
+            ad.adversary_name
+          FROM event e 
+          LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
+          ;`,
+          [game.game_id]
+        );
 
-        const scenarios = [];
-        if (game.scenario_1_name) {
-          scenarios.push({ name: game.scenario_1_name });
-        }
-        if (game.scenario_2_name) {
-          scenarios.push({ name: game.scenario_2_name });
-        }
+        const scenarios = await db.getAllAsync(
+          `WITH event AS (
+            SELECT scenario_id FROM events_fact WHERE game_id = ? GROUP BY 1
+          )
+          SELECT  
+            sd.scenario_name
+          FROM event e 
+          LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
+          ;`,
+          [game.game_id]
+        );
 
         combinedData.push({
           ...game,
@@ -157,6 +171,7 @@ function ViewResultsScreen({ navigation }) {
     }, [fetchGameData])
   );
 
+    //TODO: complete refactor - just export reads from games_fact and events_fact directly
   const generateCombinedGameCSV = (data) => {
     const headers = [
       "ID", "Played At", "Mobile Game", "Notes", "Difficulty", "Win/Loss",
@@ -254,41 +269,41 @@ function ViewResultsScreen({ navigation }) {
     }
   };
 
-  const copyGamesDimToClipboard = async () => {
+  const copyGamesFactToClipboard = async () => {
     if (!db) { Alert.alert("Error", "Database not initialized."); return; }
     setCopyingRaw(true);
     try {
-      const result = await db.getAllAsync(`SELECT * FROM games_dim;`);
+      const result = await db.getAllAsync(`SELECT * FROM games_fact;`);
       if (result.length === 0) {
-        Alert.alert("No Data", "No games found in games_dim to copy.");
+        Alert.alert("No Data", "No games found in games_fact to copy.");
         return;
       }
       const csvString = generateCsvFromObjects(result);
       await Clipboard.setStringAsync(csvString);
-      Alert.alert("Copied", "Raw games_dim data copied to clipboard.");
+      Alert.alert("Copied", "Raw games_fact data copied to clipboard.");
     } catch (error) {
-      console.error("Error copying games_dim:", error);
-      Alert.alert("Error", `Failed to copy games_dim: ${error.message}`);
+      console.error("Error copying games_fact:", error);
+      Alert.alert("Error", `Failed to copy games_fact: ${error.message}`);
     } finally {
       setCopyingRaw(false);
     }
   };
 
-  const copyEventsDimToClipboard = async () => {
+  const copyEventsFactToClipboard = async () => {
     if (!db) { Alert.alert("Error", "Database not initialized."); return; }
     setCopyingRaw(true);
     try {
-      const result = await db.getAllAsync(`SELECT * FROM events_dim;`);
+      const result = await db.getAllAsync(`SELECT * FROM events_fact;`);
       if (result.length === 0) {
-        Alert.alert("No Data", "No events found in events_dim to copy.");
+        Alert.alert("No Data", "No events found in events_fact to copy.");
         return;
       }
       const csvString = generateCsvFromObjects(result);
       await Clipboard.setStringAsync(csvString);
-      Alert.alert("Copied", "Raw events_dim data copied to clipboard.");
+      Alert.alert("Copied", "Raw events_fact data copied to clipboard.");
     } catch (error) {
-      console.error("Error copying events_dim:", error);
-      Alert.alert("Error", `Failed to copy events_dim: ${error.message}`);
+      console.error("Error copying events_fact:", error);
+      Alert.alert("Error", `Failed to copy events_fact: ${error.message}`);
     } finally {
       setCopyingRaw(false);
     }
@@ -329,7 +344,7 @@ function ViewResultsScreen({ navigation }) {
         const rows = csvString.split('\n').map(row => row.trim()).filter(Boolean);
 
         if (rows.length === 0) {
-          console.warn(`No data found in CSV for type: ${type}`);
+          console.warn(`No data found in CSV for ${type}`);
           continue;
         }
 
@@ -337,41 +352,21 @@ function ViewResultsScreen({ navigation }) {
         const dataRows = rows.slice(1);
 
         // Delete old data for this type
-        await db.runAsync(`DELETE FROM master_data WHERE type = ?;`, [type]);
+        const delete_statement = `DELETE FROM ${type} WHERE 1 = 1;`;
+        await db.runAsync(delete_statement);
         console.log(`Deleted old '${type}' data.`);
 
         for (const row of dataRows) {
           const values = row.split(',').map(v => v.trim()); // Simple split, assumes no commas within fields
-
-          if (type === 'aspect') {
-            // For aspects, expect `name,related_spirit`
-            if (values.length < 2 || !values[0] || !values[1]) {
-              console.warn(`Skipping malformed aspect row: "${row}"`);
-              continue;
-            }
-            await db.runAsync(
-              `INSERT INTO master_data (type, name, related_spirit) VALUES (?, ?, ?);`,
-              [type, values[0], values[1]]
-            );
-          } else {
-            // For other types, expect `name`
-            if (values.length < 1 || !values[0]) {
-              console.warn(`Skipping malformed ${type} row: "${row}"`);
-              continue;
-            }
-            await db.runAsync(
-              `INSERT INTO master_data (type, name) VALUES (?, ?);`,
-              [type, values[0]]
-            );
-          }
+          const placeholders = values.map(() => '?').join(', ');
+          const insert_statement = `INSERT INTO ${type} (${values.map((_, i) => `col${i + 1}`).join(', ')}) VALUES (${placeholders});`;
+          await db.runAsync(insert_statement, values);
         }
         console.log(`Inserted ${dataRows.length} '${type}' records.`);
       }
 
       await db.execAsync('COMMIT;'); // Commit if all successful
       Alert.alert("Success", "Master data updated from Google Sheets!");
-      // Optionally trigger re-fetch of game data if the display depends on master data
-      // For now, we only need AddGameScreen to refresh its dropdowns.
     } catch (error) {
       await db.execAsync('ROLLBACK;'); // Rollback on any error
       console.error("Error updating master data:", error);
@@ -405,13 +400,13 @@ function ViewResultsScreen({ navigation }) {
           disabled={gameData.length === 0}
         />
         <Button
-          title={copyingRaw ? "Copying..." : "Copy games_dim CSV"}
-          onPress={copyGamesDimToClipboard}
+          title={copyingRaw ? "Copying..." : "Copy games_fact CSV"}
+          onPress={copyGamesFactToClipboard}
           disabled={copyingRaw}
         />
         <Button
-          title={copyingRaw ? "Copying..." : "Copy events_dim CSV"}
-          onPress={copyEventsDimToClipboard}
+          title={copyingRaw ? "Copying..." : "Copy events_fact CSV"}
+          onPress={copyEventsFactToClipboard}
           disabled={copyingRaw}
         />
         {/* --- NEW BUTTON: Update Master Data --- */}

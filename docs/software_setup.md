@@ -152,10 +152,16 @@ navigate to directory
 cd app/SpiritIslandTracker
 ```
 
-run the app on phone  accessible public connection
+run the app on phone-accessible public connection tunnel (if on laptop with firewall limitations)
 ```bash
 npm start -- --tunnel
 ```
+
+run the app on local network for easier debugging and activity tracking via web interface (on laptop without firewall issues)
+```bash
+npm start
+```
+
 
 open expo go app on phone and scan qr code in terminal
 

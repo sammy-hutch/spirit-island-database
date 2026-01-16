@@ -1,5 +1,5 @@
 // src/screens/AddGameScreen.js
-import React, { useState, useCallback } from 'react'; // ADD useCallback to imports
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,11 +14,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
-import { useFocusEffect } from '@react-navigation/native'; // <-- NEW IMPORT
+import { useFocusEffect } from '@react-navigation/native';
 
 import { db } from '../../App';
 
-// ... (SpiritEntry, AdversaryEntry, ScenarioEntry components - UNCHANGED)
 const SpiritEntry = ({
   index,
   spiritOptions,
@@ -141,7 +140,7 @@ const ScenarioEntry = ({
     </View>
   );
 };
-// ... (End of helper components)
+
 
 function AddGameScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
@@ -173,7 +172,6 @@ function AddGameScreen({ navigation }) {
     return d + ic + ds + bs;
   }, [formData.difficulty, formData.invaderCards, formData.dahanSpirit, formData.blightSpirit]);
 
-  // --- MODIFIED: fetchMasterData is now a useCallback and triggered by useFocusEffect ---
   const fetchMasterData = useCallback(async () => {
     setLoading(true);
     try {
@@ -183,22 +181,22 @@ function AddGameScreen({ navigation }) {
         return;
       }
 
-      const spiritsResult = await db.getAllAsync(`SELECT name FROM master_data WHERE type = 'spirit' ORDER BY name ASC;`);
-      const spiritOptions = spiritsResult.map(row => ({ label: row.name, value: row.name }));
+      const spiritsResult = await db.getAllAsync(`SELECT spirit_name FROM spirits_dim ORDER BY spirit_name ASC;`);
+      const spiritOptions = spiritsResult.map(row => ({ label: row.spirit_name, value: row.spirit_name }));
 
-      const adversariesResult = await db.getAllAsync(`SELECT name FROM master_data WHERE type = 'adversary' ORDER BY name ASC;`);
-      const adversaryOptions = adversariesResult.map(row => ({ label: row.name, value: row.name }));
+      const adversariesResult = await db.getAllAsync(`SELECT adversary_name FROM adversaries_dim ORDER BY adversary_name ASC;`);
+      const adversaryOptions = adversariesResult.map(row => ({ label: row.adversary_name, value: row.adversary_name }));
 
-      const scenariosResult = await db.getAllAsync(`SELECT name FROM master_data WHERE type = 'scenario' ORDER BY name ASC;`);
-      const scenarioOptions = scenariosResult.map(row => ({ label: row.name, value: row.name }));
+      const scenariosResult = await db.getAllAsync(`SELECT scenario_name FROM scenarios_dim ORDER BY scenario_name ASC;`);
+      const scenarioOptions = scenariosResult.map(row => ({ label: row.scenario_name, value: row.scenario_name }));
 
-      const aspectsResult = await db.getAllAsync(`SELECT name, related_spirit FROM master_data WHERE type = 'aspect';`);
+      const aspectsResult = await db.getAllAsync(`SELECT aspect_name, spirit_name FROM aspects_dim a LEFT JOIN spirits_dim s ON a.spirit_id = s.spirit_id;`);
       const allAspectsMap = aspectsResult.reduce((acc, row) => {
-        if (row.related_spirit) { // Ensure there's a related spirit
-          if (!acc[row.related_spirit]) {
-            acc[row.related_spirit] = [];
+        if (row.spirit_name) { // Ensure there's a related spirit
+          if (!acc[row.spirit_name]) {
+            acc[row.spirit_name] = [];
           }
-          acc[row.related_spirit].push({ label: row.name, value: row.name });
+          acc[row.spirit_name].push({ label: row.aspect_name, value: row.aspect_name });
         }
         return acc;
       }, {});
@@ -215,7 +213,7 @@ function AddGameScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
-  }, []); // Dependencies: empty array, as db is a global constant
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -224,7 +222,6 @@ function AddGameScreen({ navigation }) {
       return () => { };
     }, [fetchMasterData])
   );
-  // --- END MODIFIED fetchMasterData ---
 
   const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -343,37 +340,36 @@ function AddGameScreen({ navigation }) {
       const calculatedScore = totalScore();
 
       const gameInsertResult = await db.runAsync(
-        `INSERT INTO games_dim (
-        mobile_game, notes, difficulty, win_loss, invader_cards, dahan_spirit, blight_spirit, total_score,
-        adversary_1_name, adversary_1_level, adversary_2_name, adversary_2_level,
-        scenario_1_name, scenario_2_name
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        `INSERT INTO games_fact (
+        game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, game_info
+      ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
         [
-          formData.mobileGame ? 1 : 0,
-          formData.notes,
+          //formData.mobileGame ? 1 : 0,
           parseInt(formData.difficulty || 0),
           formData.winLoss,
           parseInt(formData.invaderCards || 0),
           parseInt(formData.dahanSpirit || 0),
           parseInt(formData.blightSpirit || 0),
           calculatedScore,
-          formData.adversaries[0]?.name || null,
-          formData.adversaries[0]?.level || null,
-          formData.adversaries[1]?.name || null,
-          formData.adversaries[1]?.level || null,
-          formData.scenarios[0] || null,
-          formData.scenarios[1] || null,
+          formData.notes,
+          //formData.adversaries[0]?.name || null,
+          //formData.adversaries[0]?.level || null,
+          //formData.adversaries[1]?.name || null,
+          //formData.adversaries[1]?.level || null,
+          //formData.scenarios[0] || null,
+          //formData.scenarios[1] || null,
         ]
       );
 
       const game_id = gameInsertResult.lastInsertRowId;
 
       if (!game_id) {
-        throw new Error("Failed to retrieve a valid game ID after inserting into games_dim.");
+        throw new Error("Failed to retrieve a valid game ID after inserting into games_fact.");
       }
 
-      console.log('Game inserted into games_dim with ID:', game_id);
+      console.log('Game inserted into games_fact with ID:', game_id);
 
+      // TODO: change logic to loop per spirit-adversary-scenario combo
       for (const spiritEntry of formData.spirits) {
         if (spiritEntry.name) {
           await db.runAsync(
