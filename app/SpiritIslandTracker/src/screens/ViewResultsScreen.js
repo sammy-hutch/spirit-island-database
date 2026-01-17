@@ -118,8 +118,8 @@ function ViewResultsScreen({ navigation }) {
             sd.spirit_name, 
             ad.aspect_name
           FROM event e 
-          LEFT JOIN spirit_dim sd ON e.spirit_id = sd.spirit_id
-          LEFT JOIN aspect_dim ad ON e.aspect_id = ad.aspect_id
+          LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
+          LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
           ;`,
           [game.game_id]
         );
@@ -330,6 +330,26 @@ function ViewResultsScreen({ navigation }) {
 
       for (const type in googleSheetUrls) {
         const url = googleSheetUrls[type];
+
+        let table = null;
+        switch (type) {
+          case "spirit":
+            table = "spirits_dim";
+            break;
+          case "adversary":
+            table = "adversaries_dim";
+            break;
+          case "scenario":
+            table = "scenarios_dim";
+            break;
+          case "aspect":
+            table = "aspects_dim";
+            break;
+        }
+
+        console.log(`type: ${type}`)
+        console.log(`table: ${table}`)
+
         if (!url) {
           console.warn(`Skipping update for type '${type}': URL is missing.`);
           continue; // Skip if URL is not set
@@ -349,17 +369,26 @@ function ViewResultsScreen({ navigation }) {
         }
 
         // Assuming first row is header, and data starts from second row
+        const headers = rows[0].split(',').map(h => h.trim());
         const dataRows = rows.slice(1);
 
         // Delete old data for this type
-        const delete_statement = `DELETE FROM ${type} WHERE 1 = 1;`;
+        const delete_statement = `DELETE FROM ${table} WHERE 1 = 1;`;
         await db.runAsync(delete_statement);
         console.log(`Deleted old '${type}' data.`);
 
         for (const row of dataRows) {
           const values = row.split(',').map(v => v.trim()); // Simple split, assumes no commas within fields
+
+          if (values.length !== headers.length) {
+            console.warn(`Skipping row due to column count mismatch for ${type}: "${row}"`);
+            continue;
+          }
+
           const placeholders = values.map(() => '?').join(', ');
-          const insert_statement = `INSERT INTO ${type} (${values.map((_, i) => `col${i + 1}`).join(', ')}) VALUES (${placeholders});`;
+          const columnNames = headers.join(', ');
+          const insert_statement = `INSERT OR IGNORE INTO ${table} (${columnNames}) VALUES (${placeholders});`;
+
           await db.runAsync(insert_statement, values);
         }
         console.log(`Inserted ${dataRows.length} '${type}' records.`);
