@@ -16,13 +16,12 @@ import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 import { db } from '../../App';
 
-// ... (GameItem component - UNCHANGED)
 const GameItem = ({ game }) => (
   <View style={styles.gameItemContainer}>
-    <Text style={styles.gameItemTitle}>Game ID: {game.id} - {new Date(game.played_at).toLocaleDateString()}</Text>
-    <Text>Outcome: {game.win_loss} | Difficulty: {game.difficulty} | Score: {game.total_score}</Text>
-    {game.mobile_game ? <Text>Played on Mobile</Text> : null}
-    {game.notes ? <Text>Notes: {game.notes}</Text> : null}
+    <Text style={styles.gameItemTitle}>Game ID: {game.game_id} - {new Date(game.game_date).toLocaleDateString()}</Text>
+    <Text>Outcome: {game.game_win} | Difficulty: {game.game_difficulty} | Score: {game.game_score}</Text>
+    {game.game_mobile ? <Text>Played on Mobile</Text> : null}
+    {game.game_info ? <Text>Notes: {game.game_info}</Text> : null}
 
     {game.spirits && game.spirits.length > 0 && (
       <View style={styles.detailSection}>
@@ -40,7 +39,7 @@ const GameItem = ({ game }) => (
         <Text style={styles.detailTitle}>Adversaries:</Text>
         {game.adversaries.map((a, idx) => (
           <Text key={idx} style={styles.detailText}>
-            • {a.name} (Level {a.level})
+            • {a.adversary_name} (Level {a.adversary_level})
           </Text>
         ))}
       </View>
@@ -51,14 +50,14 @@ const GameItem = ({ game }) => (
         <Text style={styles.detailTitle}>Scenarios:</Text>
         {game.scenarios.map((s, idx) => (
           <Text key={idx} style={styles.detailText}>
-            • {s.name}
+            • {s.scenario_name}
           </Text>
         ))}
       </View>
     )}
 
     <Text style={styles.scoreDetails}>
-      Invader Cards: {game.invader_cards}, Dahan Health: {game.dahan_spirit}, Blight: {game.blight_spirit}
+      Invader Cards: {game.game_cards}, Dahan Health: {game.game_dahan}, Blight: {game.game_blight}
     </Text>
   </View>
 );
@@ -104,47 +103,42 @@ function ViewResultsScreen({ navigation }) {
     try {
       const games = await db.getAllAsync(
         `SELECT game_id, game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, game_info
-         FROM games_fact ORDER BY game_id DESC;`
+        FROM games_fact ORDER BY game_id DESC;`
       );
 
       const combinedData = [];
 
       for (const game of games) {
         const spirits = await db.getAllAsync(
-          `WITH event AS (
-            SELECT spirit_id, aspect_id FROM events_fact WHERE game_id = ? GROUP BY 1,2
-          )
-          SELECT 
-            sd.spirit_name, 
-            ad.aspect_name
-          FROM event e 
-          LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
-          LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
-          ;`,
+          `SELECT 
+          sd.spirit_name, 
+          ad.aspect_name
+        FROM events_fact e
+        LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
+        LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
+        WHERE e.game_id = ? AND e.spirit_id IS NOT NULL
+        GROUP BY sd.spirit_name, ad.aspect_name;`,
           [game.game_id]
         );
 
         const adversaries = await db.getAllAsync(
-          `WITH event AS (
-            SELECT adversary_id FROM events_fact WHERE game_id = ? GROUP BY 1
-          )
-          SELECT  
-            ad.adversary_name
-          FROM event e 
-          LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
-          ;`,
+          `SELECT
+          ad.adversary_name,
+          e.adversary_level -- Include the level from events_fact
+        FROM events_fact e
+        LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
+        WHERE e.game_id = ? AND e.adversary_id IS NOT NULL
+        GROUP BY ad.adversary_name, e.adversary_level;`,
           [game.game_id]
         );
 
         const scenarios = await db.getAllAsync(
-          `WITH event AS (
-            SELECT scenario_id FROM events_fact WHERE game_id = ? GROUP BY 1
-          )
-          SELECT  
-            sd.scenario_name
-          FROM event e 
-          LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
-          ;`,
+          `SELECT
+          sd.scenario_name
+        FROM events_fact e
+        LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
+        WHERE e.game_id = ? AND e.scenario_id IS NOT NULL
+        GROUP BY sd.scenario_name;`,
           [game.game_id]
         );
 
@@ -171,7 +165,7 @@ function ViewResultsScreen({ navigation }) {
     }, [fetchGameData])
   );
 
-    //TODO: complete refactor - just export reads from games_fact and events_fact directly
+  //TODO: complete refactor - just export reads from games_fact and events_fact directly
   const generateCombinedGameCSV = (data) => {
     const headers = [
       "ID", "Played At", "Mobile Game", "Notes", "Difficulty", "Win/Loss",
@@ -185,11 +179,11 @@ function ViewResultsScreen({ navigation }) {
         .join('; ');
 
       const adversaryString = game.adversaries
-        .map(a => `${a.name}${a.level !== null ? ` (L${a.level})` : ''}`)
+        .map(a => `${a.adversary_name}${a.adversary_level !== null ? ` (L${a.adversary_level})` : ''}`)
         .join('; ');
 
       const scenarioString = game.scenarios
-        .map(s => s.name)
+        .map(s => s.scenario_name)
         .join('; ');
 
       const escape = (field) => {
@@ -202,16 +196,16 @@ function ViewResultsScreen({ navigation }) {
       };
 
       return [
-        game.id,
-        new Date(game.played_at).toISOString(),
-        game.mobile_game ? "Yes" : "No",
-        game.notes,
-        game.difficulty,
-        game.win_loss,
-        game.invader_cards,
-        game.dahan_spirit,
-        game.blight_spirit,
-        game.total_score,
+        game.game_id,
+        //new Date(game.game_date).toISOString(),
+        //game.game_mobile ? "Yes" : "No",
+        game.game_info,
+        game.game_difficulty,
+        game.game_win,
+        game.game_cards,
+        game.game_dahan,
+        game.game_blight,
+        game.game_score,
         spiritString,
         adversaryString,
         scenarioString,
@@ -232,8 +226,7 @@ function ViewResultsScreen({ navigation }) {
       const filename = `SpiritIslandResults_${Date.now()}.csv`;
       const fileUri = FileSystem.cacheDirectory + filename;
 
-      const file = new FileSystem.File(fileUri);
-      await file.writeAsStringAsync(csvString, { encoding: FileSystem.EncodingType.UTF8 });
+      await FileSystem.writeAsStringAsync(fileUri, csvString, { encoding: FileSystem.EncodingType.UTF8 });
 
       if (!(await Sharing.isAvailableAsync())) {
         Alert.alert("Sharing not available", "Sharing is not available on your device. You can still copy to clipboard.");
@@ -273,7 +266,7 @@ function ViewResultsScreen({ navigation }) {
     if (!db) { Alert.alert("Error", "Database not initialized."); return; }
     setCopyingRaw(true);
     try {
-      const result = await db.getAllAsync(`SELECT * FROM games_fact;`);
+      const result = await db.getAllAsync(`SELECT game_id, game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, game_info FROM games_fact;`);
       if (result.length === 0) {
         Alert.alert("No Data", "No games found in games_fact to copy.");
         return;
@@ -293,7 +286,7 @@ function ViewResultsScreen({ navigation }) {
     if (!db) { Alert.alert("Error", "Database not initialized."); return; }
     setCopyingRaw(true);
     try {
-      const result = await db.getAllAsync(`SELECT * FROM events_fact;`);
+      const result = await db.getAllAsync(`SELECT event_id, game_id, spirit_id, aspect_id, adversary_id, adversary_level, scenario_id FROM events_fact;`);
       if (result.length === 0) {
         Alert.alert("No Data", "No events found in events_fact to copy.");
         return;
@@ -373,7 +366,7 @@ function ViewResultsScreen({ navigation }) {
         const dataRows = rows.slice(1);
 
         // Delete old data for this type
-        const delete_statement = `DELETE FROM ${table} WHERE 1 = 1;`;
+        const delete_statement = `DELETE FROM ${table};`; // Changed from WHERE 1=1
         await db.runAsync(delete_statement);
         console.log(`Deleted old '${type}' data.`);
 
@@ -382,6 +375,10 @@ function ViewResultsScreen({ navigation }) {
 
           if (values.length !== headers.length) {
             console.warn(`Skipping row due to column count mismatch for ${type}: "${row}"`);
+            continue;
+          }
+          if (values.length === 0 || headers.length === 0) {
+            console.warn(`Skipping empty row or headers for ${type}: "${row}"`);
             continue;
           }
 
@@ -459,7 +456,7 @@ function ViewResultsScreen({ navigation }) {
       ) : (
         <FlatList
           data={gameData}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.game_id.toString()}
           renderItem={({ item }) => <GameItem game={item} />}
           contentContainerStyle={styles.listContentContainer}
         />
