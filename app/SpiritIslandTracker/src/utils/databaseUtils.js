@@ -1,5 +1,5 @@
 // src/utils/databaseUtils.js
-import { Alert } from 'react-native'; // Only for potential error feedback, though App.js handles the main error display.
+import { Alert } from 'react-native';
 
 const googleSheetUrls = {
   spirit: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmauLev0j_IiP22IosD2M0zWZbNiHq_Rmd6Si9tbV5gvet_OZkhP0wuL60ukPHJ8ysoAjHTNaqlug-/pub?gid=1094958888&single=true&output=csv",
@@ -8,10 +8,16 @@ const googleSheetUrls = {
   aspect: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmauLev0j_IiP22IosD2M0zWZbNiHq_Rmd6Si9tbV5gvet_OZkhP0wuL60ukPHJ8ysoAjHTNaqlug-/pub?gid=101851110&single=true&output=csv",
 };
 
-export const updateAllMasterData = async (databaseInstance) => {
+/**
+* Updates master data tables (spirits, aspects, adversaries, scenarios) from Google Sheets.
+* @param {object} databaseInstance The Expo-SQLite database instance.
+* @param {boolean} forceUpdate If true, updates regardless of existing data. If false, only updates if table is empty.
+* @returns {Promise<boolean>} True if successful, throws an error otherwise.
+*/
+export const updateAllMasterData = async (databaseInstance, forceUpdate = false) => {
   if (!databaseInstance) {
     console.error("Database instance not provided for master data update.");
-    throw new Error("Database not initialized."); // Throw error for caller to handle
+    throw new Error("Database not initialized.");
   }
 
   try {
@@ -39,12 +45,22 @@ export const updateAllMasterData = async (databaseInstance) => {
           continue;
       }
 
-      if (!url || url.includes("YOUR_")) { // Check for placeholder URLs
+      if (!url || url.includes("YOUR_")) {
         console.warn(`Skipping update for type '${type}': URL is missing or placeholder.`);
         continue;
       }
 
-      console.log(`Fetching ${type} data from: ${url}`);
+      // --- NEW LOGIC: Check if table is empty and if forceUpdate is false ---
+      const countResult = await databaseInstance.getFirstAsync(`SELECT COUNT(*) as count FROM ${table};`);
+      const rowCount = countResult?.count || 0;
+
+      if (!forceUpdate && rowCount > 0) {
+        console.log(`Table '${table}' already contains ${rowCount} rows. Skipping initial update for '${type}'.`);
+        continue; // Skip fetching and updating this specific table
+      }
+      // --- END NEW LOGIC ---
+
+      console.log(`${forceUpdate ? "Force-updating" : (rowCount === 0 ? "Initial fetch for" : "Updating")} ${type} data from: ${url}`);
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status} for ${type} data.`);
@@ -57,12 +73,10 @@ export const updateAllMasterData = async (databaseInstance) => {
         continue;
       }
 
-      // Basic CSV parsing - assumes no commas within data fields without quotes
-      // For robust parsing, a dedicated CSV library would be recommended if data can contain quoted commas/newlines.
       const headers = rows[0].split(',').map(h => h.trim());
       const dataRows = rows.slice(1);
 
-      // Clear existing data
+      // Clear existing data (only if we proceed with update, which the above logic handles)
       const delete_statement = `DELETE FROM ${table};`;
       await databaseInstance.runAsync(delete_statement);
       console.log(`Deleted old '${type}' data.`);
@@ -85,11 +99,11 @@ export const updateAllMasterData = async (databaseInstance) => {
     }
 
     await databaseInstance.execAsync('COMMIT;');
-    console.log("All master data updated successfully.");
-    return true; // Indicate success
+    console.log("Master data update process completed.");
+    return true;
   } catch (error) {
     await databaseInstance.execAsync('ROLLBACK;');
     console.error("Error updating master data (ROLLBACK issued):", error);
-    throw error; // Re-throw the error for the caller to handle
+    throw error;
   }
 };

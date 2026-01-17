@@ -16,7 +16,7 @@ import ViewResultsScreen from "./src/screens/ViewResultsScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 
 // Import the new utility for master data update
-import { updateAllMasterData } from "./src/utils/databaseUtils"; // <--- NEW IMPORT
+import { updateAllMasterData } from "./src/utils/databaseUtils";
 
 const Tab = createBottomTabNavigator();
 
@@ -30,58 +30,56 @@ const initializeDatabase = async () => {
     await db.execAsync(`PRAGMA journal_mode = WAL;`);
     console.log("WAL mode enabled.");
 
-    // Define table creation statements as an array for cleaner execution
     const tableCreations = [
       `CREATE TABLE IF NOT EXISTS games_fact (
-      game_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      game_difficulty INTEGER,
-      game_win INTEGER,
-      game_cards INTEGER,
-      game_dahan INTEGER,
-      game_blight INTEGER,
-      game_score INTEGER,
-      game_info TEXT
-    );`,
+       game_id INTEGER PRIMARY KEY AUTOINCREMENT,
+       game_difficulty INTEGER,
+       game_win INTEGER,
+       game_cards INTEGER,
+       game_dahan INTEGER,
+       game_blight INTEGER,
+       game_score INTEGER,
+       game_info TEXT
+     );`,
       `CREATE TABLE IF NOT EXISTS events_fact (
-      event_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      game_id INTEGER NOT NULL,
-      spirit_id INTEGER NOT NULL,
-      aspect_id INTEGER,
-      adversary_id INTEGER,
-      adversary_level INTEGER,
-      scenario_id INTEGER,
-      FOREIGN KEY (game_id) REFERENCES games_fact(game_id) ON DELETE CASCADE
-    );`,
+       event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+       game_id INTEGER NOT NULL,
+       spirit_id INTEGER NOT NULL,
+       aspect_id INTEGER,
+       adversary_id INTEGER,
+       adversary_level INTEGER,
+       scenario_id INTEGER,
+       FOREIGN KEY (game_id) REFERENCES games_fact(game_id) ON DELETE CASCADE
+     );`,
       `CREATE TABLE IF NOT EXISTS spirits_dim (
-      spirit_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      spirit_name TEXT NOT NULL UNIQUE,
-      complexity TEXT,
-      spirit_image TEXT,
-      nemesis_name TEXT
-    );`,
+       spirit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+       spirit_name TEXT NOT NULL UNIQUE,
+       complexity TEXT,
+       spirit_image TEXT,
+       nemesis_name TEXT
+     );`,
       `CREATE TABLE IF NOT EXISTS aspects_dim (
-      aspect_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      aspect_name TEXT NOT NULL UNIQUE,
-      spirit_id INTEGER,
-      aspect_image TEXT
-    );`,
+       aspect_id INTEGER PRIMARY KEY AUTOINCREMENT,
+       aspect_name TEXT NOT NULL UNIQUE,
+       spirit_id INTEGER,
+       aspect_image TEXT
+     );`,
       `CREATE TABLE IF NOT EXISTS adversaries_dim (
-      adversary_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      adversary_name TEXT NOT NULL UNIQUE,
-      adversary_image TEXT,
-      nemesis_name TEXT
-    );`,
+       adversary_id INTEGER PRIMARY KEY AUTOINCREMENT,
+       adversary_name TEXT NOT NULL UNIQUE,
+       adversary_image TEXT,
+       nemesis_name TEXT
+     );`,
       `CREATE TABLE IF NOT EXISTS scenarios_dim (
-      scenario_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      scenario_name TEXT NOT NULL UNIQUE,
-      scenario_difficulty INTEGER,
-      scenario_image TEXT
-    );`,
+       scenario_id INTEGER PRIMARY KEY AUTOINCREMENT,
+       scenario_name TEXT NOT NULL UNIQUE,
+       scenario_difficulty INTEGER,
+       scenario_image TEXT
+     );`,
     ];
 
     for (const statement of tableCreations) {
       await db.execAsync(statement);
-      // Extract table name from CREATE TABLE IF NOT EXISTS TableName ( ...
       const match = statement.match(/CREATE TABLE IF NOT EXISTS (\w+)/);
       if (match && match[1]) {
         console.log(`Table '${match[1]}' created successfully or already exists.`);
@@ -99,16 +97,18 @@ const initializeDatabase = async () => {
 // AppContent component
 function AppContent() {
   const [dbInitialized, setDbInitialized] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("Initializing database..."); // <--- NEW state for loading message
+  const [loadingMessage, setLoadingMessage] = useState("Initializing database...");
   const [error, setError] = useState(null);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    const setupDatabaseAndData = async () => { // Renamed for clarity
+    const setupDatabaseAndData = async () => {
       try {
         await initializeDatabase();
-        setLoadingMessage("Fetching latest game data..."); // <--- Update message
-        await updateAllMasterData(db); // <--- CALL THE NEW UTILITY FUNCTION
+        setLoadingMessage("Checking for master data updates..."); // Refined message
+        // Call without forceUpdate, so it only updates if tables are empty
+        await updateAllMasterData(db, false); // Explicitly pass false, or omit for default
+        setLoadingMessage("Application data loaded!");
         setDbInitialized(true);
       } catch (e) {
         console.error("Failed to load application data:", e);
@@ -131,7 +131,7 @@ function AppContent() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{loadingMessage}</Text> {/* Use loadingMessage state */}
+        <Text>{loadingMessage}</Text>
       </View>
     );
   }
