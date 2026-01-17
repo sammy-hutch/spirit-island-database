@@ -127,8 +127,7 @@ function SettingsScreen() {
             onPress={copyGamesFactToClipboard}
             disabled={copyingRaw}
           />
-          {/* Removed buttonSpacer and added margin to the first button instead */}
-          <View style={{ height: 10 }} /> {/* A small vertical space */}
+          <View style={{ height: 10 }} />
           <Button
             title={copyingRaw ? "Copying..." : "Copy events_fact CSV"}
             onPress={copyEventsFactToClipboard}
@@ -185,13 +184,9 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   buttonGroup: {
-    flexDirection: 'column', // Changed from 'row' to 'column'
-    // justifyContent: 'space-between', // Not as relevant for column layout, can remove or adjust
+    flexDirection: 'column',
     marginTop: 10,
   },
-  // buttonSpacer: { // This style is no longer needed
-  //   width: 10,
-  // },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
