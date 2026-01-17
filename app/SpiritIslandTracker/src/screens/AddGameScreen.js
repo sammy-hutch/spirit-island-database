@@ -159,7 +159,7 @@ function AddGameScreen({ navigation }) {
     invaderCards: '',
     dahanSpirit: '',
     blightSpirit: '',
-    spirits: [{ name: null, aspect: null }],
+    spirits: [{ name: null, id: null, aspect: null, aspect_id: null }],
     adversaries: [],
     scenarios: [],
   });
@@ -181,22 +181,38 @@ function AddGameScreen({ navigation }) {
         return;
       }
 
-      const spiritsResult = await db.getAllAsync(`SELECT spirit_name FROM spirits_dim ORDER BY spirit_name ASC;`);
-      const spiritOptions = spiritsResult.map(row => ({ label: row.spirit_name, value: row.spirit_name }));
+      const spiritsResult = await db.getAllAsync(`SELECT spirit_name, spirit_id FROM spirits_dim ORDER BY spirit_name ASC;`);
+      const spiritOptions = spiritsResult.map(row => ({ 
+        label: row.spirit_name, 
+        value: row.spirit_name,
+        id: row.spirit_id
+       }));
 
-      const adversariesResult = await db.getAllAsync(`SELECT adversary_name FROM adversaries_dim ORDER BY adversary_name ASC;`);
-      const adversaryOptions = adversariesResult.map(row => ({ label: row.adversary_name, value: row.adversary_name }));
+      const adversariesResult = await db.getAllAsync(`SELECT adversary_name, adversary_id FROM adversaries_dim ORDER BY adversary_name ASC;`);
+      const adversaryOptions = adversariesResult.map(row => ({ 
+        label: row.adversary_name, 
+        value: row.adversary_name,
+        id: row.adversary_id 
+      }));
 
-      const scenariosResult = await db.getAllAsync(`SELECT scenario_name FROM scenarios_dim ORDER BY scenario_name ASC;`);
-      const scenarioOptions = scenariosResult.map(row => ({ label: row.scenario_name, value: row.scenario_name }));
+      const scenariosResult = await db.getAllAsync(`SELECT scenario_name, scenario_id FROM scenarios_dim ORDER BY scenario_name ASC;`);
+      const scenarioOptions = scenariosResult.map(row => ({ 
+        label: row.scenario_name, 
+        value: row.scenario_name,
+        id: row.scenario_id 
+      }));
 
-      const aspectsResult = await db.getAllAsync(`SELECT aspect_name, spirit_name FROM aspects_dim a LEFT JOIN spirits_dim s ON a.spirit_id = s.spirit_id;`);
+      const aspectsResult = await db.getAllAsync(`SELECT aspect_name, aspect_id, spirit_name FROM aspects_dim a LEFT JOIN spirits_dim s ON a.spirit_id = s.spirit_id;`);
       const allAspectsMap = aspectsResult.reduce((acc, row) => {
-        if (row.spirit_name) { // Ensure there's a related spirit
+        if (row.spirit_name) {
           if (!acc[row.spirit_name]) {
             acc[row.spirit_name] = [];
           }
-          acc[row.spirit_name].push({ label: row.aspect_name, value: row.aspect_name });
+          acc[row.spirit_name].push({ 
+            label: row.aspect_name, 
+            value: row.aspect_name,
+            id: row.aspect_id
+           });
         }
         return acc;
       }, {});
@@ -231,7 +247,7 @@ function AddGameScreen({ navigation }) {
     if (formData.spirits.length < 6) {
       setFormData(prev => ({
         ...prev,
-        spirits: [...prev.spirits, { name: null, aspect: null }],
+        spirits: [...prev.spirits, { name: null, id: null, aspect: null, aspect_id: null }],
       }));
     }
   };
@@ -246,7 +262,15 @@ function AddGameScreen({ navigation }) {
   const handleSpiritChange = (index, value) => {
     setFormData(prev => {
       const newSpirits = [...prev.spirits];
-      newSpirits[index] = { name: value, aspect: null };
+      const selectedSpiritOption = masterData.spiritOptions.find(option => option.value === value);
+      const spiritId = selectedSpiritOption ? selectedSpiritOption.id : null;
+      newSpirits[index] = {
+        ...newSpirits[index],
+        name: value,
+        id: spiritId,
+        aspect: null,
+        aspect_id: null
+      };
       return { ...prev, spirits: newSpirits };
     });
   };
@@ -254,7 +278,26 @@ function AddGameScreen({ navigation }) {
   const handleAspectChange = (index, value) => {
     setFormData(prev => {
       const newSpirits = [...prev.spirits];
-      newSpirits[index].aspect = value;
+
+      const currentSpiritEntry = newSpirits[index];
+      const selectedSpiritName = currentSpiritEntry.name;
+      let aspectId = null;
+
+      if (selectedSpiritName && masterData.allAspectsMap[selectedSpiritName]) {
+        const aspectsForThisSpirit = masterData.allAspectsMap[selectedSpiritName];
+        const selectedAspectOption = aspectsForThisSpirit.find(option => option.value === value);
+
+        if (selectedAspectOption) {
+          aspectId = selectedAspectOption.id;
+        }
+      }
+
+      newSpirits[index] = {
+        ...currentSpiritEntry,
+        aspect: value,
+        aspect_id: aspectId,
+      };
+
       return { ...prev, spirits: newSpirits };
     });
   };
@@ -278,7 +321,13 @@ function AddGameScreen({ navigation }) {
   const handleAdversaryChange = (index, value) => {
     setFormData(prev => {
       const newAdversaries = [...prev.adversaries];
-      newAdversaries[index] = { name: value, level: null };
+      const selectedAdversaryOption = masterData.adversaryOptions.find(option => option.value === value);
+      const adversaryId = selectedAdversaryOption ? selectedAdversaryOption.id : null;
+      newAdversaries[index] = { 
+        ...newAdversaries[index],
+        name: value, 
+        id: adversaryId,
+        level: null };
       return { ...prev, adversaries: newAdversaries };
     });
   };
@@ -295,7 +344,7 @@ function AddGameScreen({ navigation }) {
     if (formData.scenarios.length < 2) {
       setFormData(prev => ({
         ...prev,
-        scenarios: [...prev.scenarios, null],
+        scenarios: [...prev.scenarios, { name: null, id: null }],
       }));
     }
   };
@@ -310,7 +359,13 @@ function AddGameScreen({ navigation }) {
   const handleScenarioChange = (index, value) => {
     setFormData(prev => {
       const newScenarios = [...prev.scenarios];
-      newScenarios[index] = value;
+      const selectedScenarioOption = masterData.scenarioOptions.find(option => option.value === value);
+      const scenarioId = selectedScenarioOption ? selectedScenarioOption.id : null;
+      newScenarios[index] = {
+        ...newScenarios[index],
+        name: value,
+        id: scenarioId
+      };
       return { ...prev, scenarios: newScenarios };
     });
   };
@@ -337,6 +392,7 @@ function AddGameScreen({ navigation }) {
     }
 
     try {
+      // log game data
       const calculatedScore = totalScore();
 
       const gameInsertResult = await db.runAsync(
@@ -352,12 +408,6 @@ function AddGameScreen({ navigation }) {
           parseInt(formData.blightSpirit || 0),
           calculatedScore,
           formData.notes,
-          //formData.adversaries[0]?.name || null,
-          //formData.adversaries[0]?.level || null,
-          //formData.adversaries[1]?.name || null,
-          //formData.adversaries[1]?.level || null,
-          //formData.scenarios[0] || null,
-          //formData.scenarios[1] || null,
         ]
       );
 
@@ -369,23 +419,33 @@ function AddGameScreen({ navigation }) {
 
       console.log('Game inserted into games_fact with ID:', game_id);
 
-      // TODO: change logic to loop per spirit-adversary-scenario combo
-      for (const spiritEntry of formData.spirits) {
-        if (spiritEntry.name) {
-          await db.runAsync(
-            `INSERT INTO events_dim (game_id, spirit_name, aspect_name) VALUES (?, ?, ?);`,
-            [game_id, spiritEntry.name, spiritEntry.aspect]
-          );
-          console.log(`Inserted spirit "${spiritEntry.name}" (Aspect: ${spiritEntry.aspect || 'None'}) for game ID: ${game_id}`);
+      // log events data
+      const selectedSpirits = formData.spirits.filter(s => s.name);
+
+      const validAdversaries = formData.adversaries.filter(a => a.name);
+      const adversariesToProcess = validAdversaries.length > 0 ? validAdversaries : [{ id: null, level: null }];
+
+      const validScenarios = formData.scenarios.filter(s => s.name);
+      const scenariosToProcess = validScenarios.length > 0 ? validScenarios : [{ id: null }];
+
+      for (const spiritEntry of selectedSpirits) {
+        for (const adversaryEntry of adversariesToProcess) {
+          for (const scenarioEntry of scenariosToProcess) {
+            await db.runAsync(
+              `INSERT INTO events_fact (game_id, spirit_id, aspect_id, adversary_id, adversary_level, scenario_id) VALUES (?, ?, ?, ?, ?, ?);`,
+              [game_id, spiritEntry.id, spiritEntry.aspect_id, adversaryEntry.id, adversaryEntry.level, scenarioEntry.id]
+            );
+            console.log(`Inserted combination for game ID: ${game_id}, Spirit: "${spiritEntry.name}" (Adversary: ${adversaryEntry.id || 'None'}, Scenario: ${scenarioEntry.id || 'None'})`);
+          }
         }
       }
-      console.log('All spirit events processed for game ID:', game_id);
+      console.log('All events processed for game ID:', game_id);
 
       Alert.alert("Success", "Game results saved successfully!");
       setFormData({
         mobileGame: false, notes: '', difficulty: '', winLoss: null,
         invaderCards: '', dahanSpirit: '', blightSpirit: '',
-        spirits: [{ name: null, aspect: null }], adversaries: [], scenarios: []
+        spirits: [{ name: null, id: null, aspect: null, aspect_id: null }], adversaries: [], scenarios: []
       });
 
     } catch (error) {
@@ -530,7 +590,7 @@ function AddGameScreen({ navigation }) {
             key={index}
             index={index}
             scenarioOptions={masterData.scenarioOptions}
-            selectedScenario={scenarioName}
+            selectedScenario={scenarioName.name}
             onScenarioChange={handleScenarioChange}
             onRemove={removeScenarioEntry}
             canRemove={formData.scenarios.length > 0}
