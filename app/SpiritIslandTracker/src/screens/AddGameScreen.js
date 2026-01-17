@@ -234,7 +234,6 @@ function AddGameScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => {
       fetchMasterData();
-      // Optional cleanup
       return () => { };
     }, [fetchMasterData])
   );
@@ -612,7 +611,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     backgroundColor: '#f5f5f5',
-    paddingBottom: 50, // Give some space at the bottom for scrolling
+    paddingBottom: 50,
   },
   loadingContainer: {
     flex: 1,
@@ -670,8 +669,8 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
     fontSize: 16,
-    minHeight: 100, // Make text area taller
-    textAlignVertical: 'top', // For Android
+    minHeight: 100,
+    textAlignVertical: 'top',
     backgroundColor: '#fff',
     color: '#333',
   },
@@ -718,7 +717,7 @@ const pickerSelectStyles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 8,
     color: 'black',
-    paddingRight: 30, // to ensure the text is never behind the icon
+    paddingRight: 30,
     backgroundColor: '#fff',
     marginBottom: 15,
   },
@@ -730,12 +729,12 @@ const pickerSelectStyles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 8,
     color: 'black',
-    paddingRight: 30, // to ensure the text is never behind the icon
+    paddingRight: 30,
     backgroundColor: '#fff',
     marginBottom: 15,
   },
   placeholder: {
-    color: '#999', // Placeholder text color
+    color: '#999',
   },
 });
 

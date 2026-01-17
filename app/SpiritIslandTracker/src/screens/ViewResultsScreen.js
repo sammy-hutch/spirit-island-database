@@ -103,7 +103,7 @@ function ViewResultsScreen({ navigation }) {
     try {
       const games = await db.getAllAsync(
         `SELECT game_id, game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, game_info
-        FROM games_fact ORDER BY game_id DESC;`
+          FROM games_fact ORDER BY game_id DESC;`
       );
 
       const combinedData = [];
@@ -111,34 +111,34 @@ function ViewResultsScreen({ navigation }) {
       for (const game of games) {
         const spirits = await db.getAllAsync(
           `SELECT 
-          sd.spirit_name, 
-          ad.aspect_name
-        FROM events_fact e
-        LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
-        LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
-        WHERE e.game_id = ? AND e.spirit_id IS NOT NULL
-        GROUP BY sd.spirit_name, ad.aspect_name;`,
+              sd.spirit_name, 
+              ad.aspect_name
+            FROM events_fact e
+            LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
+            LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
+            WHERE e.game_id = ? AND e.spirit_id IS NOT NULL
+            GROUP BY sd.spirit_name, ad.aspect_name;`,
           [game.game_id]
         );
 
         const adversaries = await db.getAllAsync(
           `SELECT
-          ad.adversary_name,
-          e.adversary_level -- Include the level from events_fact
-        FROM events_fact e
-        LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
-        WHERE e.game_id = ? AND e.adversary_id IS NOT NULL
-        GROUP BY ad.adversary_name, e.adversary_level;`,
+              ad.adversary_name,
+              e.adversary_level -- Include the level from events_fact
+            FROM events_fact e
+            LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
+            WHERE e.game_id = ? AND e.adversary_id IS NOT NULL
+            GROUP BY ad.adversary_name, e.adversary_level;`,
           [game.game_id]
         );
 
         const scenarios = await db.getAllAsync(
           `SELECT
-          sd.scenario_name
-        FROM events_fact e
-        LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
-        WHERE e.game_id = ? AND e.scenario_id IS NOT NULL
-        GROUP BY sd.scenario_name;`,
+              sd.scenario_name
+            FROM events_fact e
+            LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
+            WHERE e.game_id = ? AND e.scenario_id IS NOT NULL
+            GROUP BY sd.scenario_name;`,
           [game.game_id]
         );
 
@@ -302,16 +302,13 @@ function ViewResultsScreen({ navigation }) {
     }
   };
 
-  // --- NEW: Google Sheet URLs (REPLACE WITH YOUR ACTUAL PUBLISHED CSV URLs) ---
   const googleSheetUrls = {
     spirit: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmauLev0j_IiP22IosD2M0zWZbNiHq_Rmd6Si9tbV5gvet_OZkhP0wuL60ukPHJ8ysoAjHTNaqlug-/pub?gid=1094958888&single=true&output=csv",
     adversary: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmauLev0j_IiP22IosD2M0zWZbNiHq_Rmd6Si9tbV5gvet_OZkhP0wuL60ukPHJ8ysoAjHTNaqlug-/pub?gid=610878563&single=true&output=csv",
     scenario: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmauLev0j_IiP22IosD2M0zWZbNiHq_Rmd6Si9tbV5gvet_OZkhP0wuL60ukPHJ8ysoAjHTNaqlug-/pub?gid=1993883548&single=true&output=csv",
     aspect: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmauLev0j_IiP22IosD2M0zWZbNiHq_Rmd6Si9tbV5gvet_OZkhP0wuL60ukPHJ8ysoAjHTNaqlug-/pub?gid=101851110&single=true&output=csv",
   };
-  // --- END NEW URLs ---
 
-  // --- NEW: Function to update master data from Google Sheets ---
   const handleUpdateMasterData = async () => {
     if (!db) {
       Alert.alert("Error", "Database not initialized. Please restart the app.");
@@ -366,7 +363,7 @@ function ViewResultsScreen({ navigation }) {
         const dataRows = rows.slice(1);
 
         // Delete old data for this type
-        const delete_statement = `DELETE FROM ${table};`; // Changed from WHERE 1=1
+        const delete_statement = `DELETE FROM ${table};`;
         await db.runAsync(delete_statement);
         console.log(`Deleted old '${type}' data.`);
 
@@ -401,7 +398,6 @@ function ViewResultsScreen({ navigation }) {
       setUpdatingMasterData(false);
     }
   };
-  // --- END NEW UPDATE FUNCTION ---
 
   if (loading) {
     return (
@@ -435,13 +431,11 @@ function ViewResultsScreen({ navigation }) {
           onPress={copyEventsFactToClipboard}
           disabled={copyingRaw}
         />
-        {/* --- NEW BUTTON: Update Master Data --- */}
         <Button
           title={updatingMasterData ? "Updating..." : "Update Master Data"}
           onPress={handleUpdateMasterData}
           disabled={updatingMasterData}
         />
-        {/* --- END NEW BUTTON --- */}
         <Button
           title="Add New Game"
           onPress={() => navigation.navigate('AddGameTab')}

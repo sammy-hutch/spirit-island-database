@@ -7,7 +7,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 
 import * as SQLite from 'expo-sqlite';
 
-// Import your screen components
+// Import screen components
 import AddGameScreen from './src/screens/AddGameScreen';
 import ViewResultsScreen from './src/screens/ViewResultsScreen';
 
@@ -16,7 +16,6 @@ const Tab = createBottomTabNavigator();
 // Declare db globally but assign it after opening async
 let db = null;
 
-// --- Database Initialization Logic (UNCHANGED) ---
 const initializeDatabase = async () => {
   try {
     db = await SQLite.openDatabaseAsync("spiritIslandTracker.db");
@@ -218,7 +217,6 @@ function AppContent() {
   );
 }
 
-// Original App Component now wraps AppContent with SafeAreaProvider
 export default function App() {
   return (
     <SafeAreaProvider>
