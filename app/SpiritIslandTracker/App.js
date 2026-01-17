@@ -13,7 +13,10 @@ import * as SQLite from "expo-sqlite";
 // Import screen components
 import AddGameScreen from "./src/screens/AddGameScreen";
 import ViewResultsScreen from "./src/screens/ViewResultsScreen";
-import SettingsScreen from "./src/screens/SettingsScreen"; // <-- NEW IMPORT
+import SettingsScreen from "./src/screens/SettingsScreen";
+
+// Import the new utility for master data update
+import { updateAllMasterData } from "./src/utils/databaseUtils"; // <--- NEW IMPORT
 
 const Tab = createBottomTabNavigator();
 
@@ -27,7 +30,8 @@ const initializeDatabase = async () => {
     await db.execAsync(`PRAGMA journal_mode = WAL;`);
     console.log("WAL mode enabled.");
 
-    await db.execAsync(
+    // Define table creation statements as an array for cleaner execution
+    const tableCreations = [
       `CREATE TABLE IF NOT EXISTS games_fact (
       game_id INTEGER PRIMARY KEY AUTOINCREMENT,
       game_difficulty INTEGER,
@@ -38,10 +42,6 @@ const initializeDatabase = async () => {
       game_score INTEGER,
       game_info TEXT
     );`,
-    );
-    console.log("games_fact table created successfully or already exists.");
-
-    await db.execAsync(
       `CREATE TABLE IF NOT EXISTS events_fact (
       event_id INTEGER PRIMARY KEY AUTOINCREMENT,
       game_id INTEGER NOT NULL,
@@ -52,10 +52,6 @@ const initializeDatabase = async () => {
       scenario_id INTEGER,
       FOREIGN KEY (game_id) REFERENCES games_fact(game_id) ON DELETE CASCADE
     );`,
-    );
-    console.log("events_fact table created successfully or already exists.");
-
-    await db.execAsync(
       `CREATE TABLE IF NOT EXISTS spirits_dim (
       spirit_id INTEGER PRIMARY KEY AUTOINCREMENT,
       spirit_name TEXT NOT NULL UNIQUE,
@@ -63,40 +59,37 @@ const initializeDatabase = async () => {
       spirit_image TEXT,
       nemesis_name TEXT
     );`,
-    );
-    console.log("spirits_dim table created successfully or already exists.");
-
-    await db.execAsync(
       `CREATE TABLE IF NOT EXISTS aspects_dim (
       aspect_id INTEGER PRIMARY KEY AUTOINCREMENT,
       aspect_name TEXT NOT NULL UNIQUE,
       spirit_id INTEGER,
       aspect_image TEXT
     );`,
-    );
-    console.log("aspects_dim table created successfully or already exists.");
-
-    await db.execAsync(
       `CREATE TABLE IF NOT EXISTS adversaries_dim (
       adversary_id INTEGER PRIMARY KEY AUTOINCREMENT,
       adversary_name TEXT NOT NULL UNIQUE,
       adversary_image TEXT,
       nemesis_name TEXT
     );`,
-    );
-    console.log(
-      "adversaries_dim table created successfully or already exists.",
-    );
-
-    await db.execAsync(
       `CREATE TABLE IF NOT EXISTS scenarios_dim (
       scenario_id INTEGER PRIMARY KEY AUTOINCREMENT,
       scenario_name TEXT NOT NULL UNIQUE,
       scenario_difficulty INTEGER,
       scenario_image TEXT
     );`,
-    );
-    console.log("scenarios_dim table created successfully or already exists.");
+    ];
+
+    for (const statement of tableCreations) {
+      await db.execAsync(statement);
+      // Extract table name from CREATE TABLE IF NOT EXISTS TableName ( ...
+      const match = statement.match(/CREATE TABLE IF NOT EXISTS (\w+)/);
+      if (match && match[1]) {
+        console.log(`Table '${match[1]}' created successfully or already exists.`);
+      } else {
+        console.log(`Executed table creation statement.`);
+      }
+    }
+
   } catch (error) {
     console.error("Error initializing database:", error);
     throw error;
@@ -106,21 +99,24 @@ const initializeDatabase = async () => {
 // AppContent component
 function AppContent() {
   const [dbInitialized, setDbInitialized] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Initializing database..."); // <--- NEW state for loading message
   const [error, setError] = useState(null);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    const setupDatabase = async () => {
+    const setupDatabaseAndData = async () => { // Renamed for clarity
       try {
         await initializeDatabase();
+        setLoadingMessage("Fetching latest game data..."); // <--- Update message
+        await updateAllMasterData(db); // <--- CALL THE NEW UTILITY FUNCTION
         setDbInitialized(true);
       } catch (e) {
-        console.error("Failed to initialize database:", e);
-        setError("Failed to initialize database. Please restart the app.");
+        console.error("Failed to load application data:", e);
+        setError(`Failed to load application data. Please restart the app. Error: ${e.message}`);
       }
     };
 
-    setupDatabase();
+    setupDatabaseAndData();
   }, []);
 
   if (error) {
@@ -135,7 +131,7 @@ function AppContent() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Loading application data...</Text>
+        <Text>{loadingMessage}</Text> {/* Use loadingMessage state */}
       </View>
     );
   }
@@ -159,7 +155,6 @@ function AppContent() {
             } else if (route.name === "ViewResultsTab") {
               iconName = focused ? "📊" : "📈";
             } else if (route.name === "SettingsTab") {
-              // <-- NEW ICON LOGIC
               iconName = focused ? "⚙️" : "🔧";
             }
             return <Text style={{ color, fontSize: size }}>{iconName}</Text>;
@@ -187,7 +182,7 @@ function AppContent() {
             tabBarLabel: "View Results",
           }}
         />
-        <Tab.Screen // <-- NEW TAB SCREEN
+        <Tab.Screen
           name="SettingsTab"
           component={SettingsScreen}
           options={{

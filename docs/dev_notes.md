@@ -6,21 +6,25 @@ want to be able to create SQL scripts in .sql files rather than in comment block
 to do this, i need a function that can take sql files and extract the text to populate python function with the sql scripts
 
 components:
-[X] function which runs DDL commands against database
-[ ] set up jinja
-[ ] files where SQL scripts are built
-[ ] seed files to build static dimension tables & store 'data' (accolade dscriptions and calculations)
-[X] process (API?) to pull data (at least fact tables) from google sheets
-[ ] process to pull data from local excel sheet
-[ ] function where user defines which scripts they want to process, and how they want to process them (build, drop, etc)
-[ ] function to compile and order chosen SQL scripts, ready for input into DDL runner
-[ ] tags for types of tables (e.g. source, seed, models) (and yaml file) so tables can be handled in batches
+- [X] function which runs DDL commands against database
+- [ ] set up jinja
+- [ ] files where SQL scripts are built
+- [ ] seed files to build static dimension tables & store 'data' (accolade dscriptions and calculations)
+- [X] process (API?) to pull data (at least fact tables) from google sheets
+- [ ] process to pull data from local excel sheet
+- [ ] function where user defines which scripts they want to process, and how they want to process them (build, drop, etc)
+- [ ] function to compile and order chosen SQL scripts, ready for input into DDL runner
+- [ ] tags for types of tables (e.g. source, seed, models) (and yaml file) so tables can be handled in batches
 
 General TODO:
-[ ] unit tests and data tests
-[ ] docstrings
+- [ ] unit tests and data tests
+- [ ] docstrings
+- [ ] mobile game flag, game date flag, blight card flag, terror level counter
 
-
+App TODO:
+- settings buttons on separate lines
+- update master data when app starts
+- write to gsheet when saving game data, or at least a batch way to do so
 
 Accolades TODO
 | done | nominee | name | accolade |
