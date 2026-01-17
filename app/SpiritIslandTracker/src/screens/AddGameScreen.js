@@ -394,6 +394,7 @@ function AddGameScreen({ navigation }) {
     try {
       // log game data
       const calculatedScore = totalScore();
+      const game_score = formData.winLoss === 'Win' ? 10 : 0
 
       const gameInsertResult = await db.runAsync(
         `INSERT INTO games_fact (
@@ -402,7 +403,7 @@ function AddGameScreen({ navigation }) {
         [
           //formData.mobileGame ? 1 : 0,
           parseInt(formData.difficulty || 0),
-          formData.winLoss,
+          game_score,
           parseInt(formData.invaderCards || 0),
           parseInt(formData.dahanPerSpirit || 0),
           parseInt(formData.blightPerSpirit || 0),
