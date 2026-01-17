@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { db } from '../../App';
-import { updateAllMasterData } from '../utils/databaseUtils'; // Already imported
+import { updateAllMasterData } from '../utils/databaseUtils';
 
 // Helper function to generate CSV string from any array of objects
 const generateCsvFromObjects = (dataArray) => {
@@ -49,7 +49,7 @@ function SettingsScreen() {
     }
     setUpdatingMasterData(true);
     try {
-      await updateAllMasterData(db, true); // <--- PASS TRUE TO FORCE UPDATE
+      await updateAllMasterData(db, true);
       Alert.alert("Success", "Master data updated from Google Sheets!");
     } catch (error) {
       console.error("Error updating master data:", error);
@@ -127,7 +127,8 @@ function SettingsScreen() {
             onPress={copyGamesFactToClipboard}
             disabled={copyingRaw}
           />
-          <View style={styles.buttonSpacer} />
+          {/* Removed buttonSpacer and added margin to the first button instead */}
+          <View style={{ height: 10 }} /> {/* A small vertical space */}
           <Button
             title={copyingRaw ? "Copying..." : "Copy events_fact CSV"}
             onPress={copyEventsFactToClipboard}
@@ -184,13 +185,13 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   buttonGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column', // Changed from 'row' to 'column'
+    // justifyContent: 'space-between', // Not as relevant for column layout, can remove or adjust
     marginTop: 10,
   },
-  buttonSpacer: {
-    width: 10,
-  },
+  // buttonSpacer: { // This style is no longer needed
+  //   width: 10,
+  // },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
