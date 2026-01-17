@@ -157,8 +157,8 @@ function AddGameScreen({ navigation }) {
     difficulty: '',
     winLoss: null,
     invaderCards: '',
-    dahanSpirit: '',
-    blightSpirit: '',
+    dahanPerSpirit: '',
+    blightPerSpirit: '',
     spirits: [{ name: null, id: null, aspect: null, aspect_id: null }],
     adversaries: [],
     scenarios: [],
@@ -166,11 +166,12 @@ function AddGameScreen({ navigation }) {
 
   const totalScore = useCallback(() => {
     const d = parseInt(formData.difficulty || 0);
-    const ic = parseInt(formData.invaderCards || 0);
-    const ds = parseInt(formData.dahanSpirit || 0);
-    const bs = parseInt(formData.blightSpirit || 0);
-    return d + ic + ds + bs;
-  }, [formData.difficulty, formData.invaderCards, formData.dahanSpirit, formData.blightSpirit]);
+    const wl = formData.winLoss === 'Win' ? 10 : 0;
+    const ic = formData.winLoss === 'Win' ? parseInt(formData.invaderCards || 0) * 2 : parseInt(formData.invaderCards || 0) * 1;
+    const ds = parseInt(formData.dahanPerSpirit || 0);
+    const bs = parseInt(formData.blightPerSpirit || 0);
+    return d + wl + ic + ds - bs;
+  }, [formData.difficulty, formData.invaderCards, formData.dahanPerSpirit, formData.blightPerSpirit]);
 
   const fetchMasterData = useCallback(async () => {
     setLoading(true);
@@ -403,8 +404,8 @@ function AddGameScreen({ navigation }) {
           parseInt(formData.difficulty || 0),
           formData.winLoss,
           parseInt(formData.invaderCards || 0),
-          parseInt(formData.dahanSpirit || 0),
-          parseInt(formData.blightSpirit || 0),
+          parseInt(formData.dahanPerSpirit || 0),
+          parseInt(formData.blightPerSpirit || 0),
           calculatedScore,
           formData.notes,
         ]
@@ -443,7 +444,7 @@ function AddGameScreen({ navigation }) {
       Alert.alert("Success", "Game results saved successfully!");
       setFormData({
         mobileGame: false, notes: '', difficulty: '', winLoss: null,
-        invaderCards: '', dahanSpirit: '', blightSpirit: '',
+        invaderCards: '', dahanPerSpirit: '', blightPerSpirit: '',
         spirits: [{ name: null, id: null, aspect: null, aspect_id: null }], adversaries: [], scenarios: []
       });
 
@@ -527,8 +528,8 @@ function AddGameScreen({ navigation }) {
         <TextInput
           style={styles.input}
           keyboardType="numeric"
-          value={String(formData.dahanSpirit)}
-          onChangeText={(text) => handleFormChange('dahanSpirit', text)}
+          value={String(formData.dahanPerSpirit)}
+          onChangeText={(text) => handleFormChange('dahanPerSpirit', text)}
           placeholder="e.g., 5"
         />
 
@@ -536,8 +537,8 @@ function AddGameScreen({ navigation }) {
         <TextInput
           style={styles.input}
           keyboardType="numeric"
-          value={String(formData.blightSpirit)}
-          onChangeText={(text) => handleFormChange('blightSpirit', text)}
+          value={String(formData.blightPerSpirit)}
+          onChangeText={(text) => handleFormChange('blightPerSpirit', text)}
           placeholder="e.g., 0"
         />
 
