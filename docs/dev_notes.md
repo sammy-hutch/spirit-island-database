@@ -22,7 +22,6 @@ General TODO:
 - [ ] mobile game flag, game date flag, blight card flag, terror level counter
 
 App TODO:
-- settings buttons on separate lines
 - update master data when app starts
 - write to gsheet when saving game data, or at least a batch way to do so
 
