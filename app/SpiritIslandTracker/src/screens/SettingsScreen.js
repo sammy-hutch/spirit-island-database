@@ -1,5 +1,5 @@
 // src/screens/SettingsScreen.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // <--- Import useEffect
 import {
   View,
   Text,
@@ -12,8 +12,9 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import { db } from '../../App';
 import { updateAllMasterData } from '../utils/databaseUtils';
+import { getGoogleSheetsAccessToken, logoutGoogleSheets } from '../utils/googleSheetsAuth'; // <--- NEW IMPORT
 
-// Helper function to generate CSV string from any array of objects
+// Helper function to generate CSV string from any array of objects (UNCHANGED)
 const generateCsvFromObjects = (dataArray) => {
   if (!dataArray || dataArray.length === 0) {
     return "";
@@ -41,6 +42,17 @@ const generateCsvFromObjects = (dataArray) => {
 function SettingsScreen() {
   const [updatingMasterData, setUpdatingMasterData] = useState(false);
   const [copyingRaw, setCopyingRaw] = useState(false);
+  const [isSheetsAuthenticated, setIsSheetsAuthenticated] = useState(false); // <--- NEW STATE
+
+  // Check Google Sheets authentication status on component mount and focus
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      // getGoogleSheetsAccessToken will attempt to refresh if needed
+      const token = await getGoogleSheetsAccessToken();
+      setIsSheetsAuthenticated(!!token); // !!token converts truthy/falsy to boolean
+    };
+    checkAuthStatus();
+  }, []);
 
   const handleUpdateMasterData = async () => {
     if (!db) {
@@ -58,6 +70,22 @@ function SettingsScreen() {
       setUpdatingMasterData(false);
     }
   };
+
+  // <--- NEW FUNCTIONS FOR GOOGLE SHEETS AUTHENTICATION ---
+  const handleGoogleSheetsAuth = async () => {
+    // This function triggers the full OAuth flow (login or refresh)
+    const token = await getGoogleSheetsAccessToken();
+    setIsSheetsAuthenticated(!!token);
+    if (token) {
+      Alert.alert("Success", "Successfully connected to Google Sheets.");
+    }
+  };
+
+  const handleGoogleSheetsLogout = async () => {
+    await logoutGoogleSheets(); // This clears tokens and sets accessToken/refreshToken to null
+    setIsSheetsAuthenticated(false);
+  };
+  // --- END NEW FUNCTIONS ---
 
   const copyGamesFactToClipboard = async () => {
     if (!db) { Alert.alert("Error", "Database not initialized."); return; }
@@ -115,6 +143,28 @@ function SettingsScreen() {
           disabled={updatingMasterData}
         />
       </View>
+
+      {/* <--- NEW SECTION FOR GOOGLE SHEETS INTEGRATION --- */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Google Sheets Integration</Text>
+        <Text style={styles.sectionDescription}>
+          Connect your Google account to automatically write game results to a Google Sheet.
+          Ensure the sheet is owned by or shared with this Google account and has the correct headers.
+        </Text>
+        {isSheetsAuthenticated ? (
+          <Button
+            title="Disconnect from Google Sheets"
+            onPress={handleGoogleSheetsLogout}
+            color="#FF6347" // Red for disconnect
+          />
+        ) : (
+          <Button
+            title="Connect to Google Sheets"
+            onPress={handleGoogleSheetsAuth}
+          />
+        )}
+      </View>
+      {/* --- END NEW SECTION --- */}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Export Raw Data</Text>

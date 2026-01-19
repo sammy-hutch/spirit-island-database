@@ -17,6 +17,7 @@ import RNPickerSelect from 'react-native-picker-select';
 import { useFocusEffect } from '@react-navigation/native';
 
 import { db } from '../../App';
+import { writeToGoogleSheet } from '../utils/googleSheetsApi';
 
 const SpiritEntry = ({
   index,
@@ -183,24 +184,24 @@ function AddGameScreen({ navigation }) {
       }
 
       const spiritsResult = await db.getAllAsync(`SELECT spirit_name, spirit_id FROM spirits_dim ORDER BY spirit_name ASC;`);
-      const spiritOptions = spiritsResult.map(row => ({ 
-        label: row.spirit_name, 
+      const spiritOptions = spiritsResult.map(row => ({
+        label: row.spirit_name,
         value: row.spirit_name,
         id: row.spirit_id
-       }));
+      }));
 
       const adversariesResult = await db.getAllAsync(`SELECT adversary_name, adversary_id FROM adversaries_dim ORDER BY adversary_name ASC;`);
-      const adversaryOptions = adversariesResult.map(row => ({ 
-        label: row.adversary_name, 
+      const adversaryOptions = adversariesResult.map(row => ({
+        label: row.adversary_name,
         value: row.adversary_name,
-        id: row.adversary_id 
+        id: row.adversary_id
       }));
 
       const scenariosResult = await db.getAllAsync(`SELECT scenario_name, scenario_id FROM scenarios_dim ORDER BY scenario_name ASC;`);
-      const scenarioOptions = scenariosResult.map(row => ({ 
-        label: row.scenario_name, 
+      const scenarioOptions = scenariosResult.map(row => ({
+        label: row.scenario_name,
         value: row.scenario_name,
-        id: row.scenario_id 
+        id: row.scenario_id
       }));
 
       const aspectsResult = await db.getAllAsync(`SELECT aspect_name, aspect_id, spirit_name FROM aspects_dim a LEFT JOIN spirits_dim s ON a.spirit_id = s.spirit_id;`);
@@ -209,11 +210,11 @@ function AddGameScreen({ navigation }) {
           if (!acc[row.spirit_name]) {
             acc[row.spirit_name] = [];
           }
-          acc[row.spirit_name].push({ 
-            label: row.aspect_name, 
+          acc[row.spirit_name].push({
+            label: row.aspect_name,
             value: row.aspect_name,
             id: row.aspect_id
-           });
+          });
         }
         return acc;
       }, {});
@@ -323,11 +324,12 @@ function AddGameScreen({ navigation }) {
       const newAdversaries = [...prev.adversaries];
       const selectedAdversaryOption = masterData.adversaryOptions.find(option => option.value === value);
       const adversaryId = selectedAdversaryOption ? selectedAdversaryOption.id : null;
-      newAdversaries[index] = { 
+      newAdversaries[index] = {
         ...newAdversaries[index],
-        name: value, 
+        name: value,
         id: adversaryId,
-        level: null };
+        level: null
+      };
       return { ...prev, adversaries: newAdversaries };
     });
   };
@@ -391,6 +393,9 @@ function AddGameScreen({ navigation }) {
       }
     }
 
+    let saveToLocalDbSuccess = false;
+    let game_id = null;
+
     try {
       // log game data
       const calculatedScore = totalScore();
@@ -412,7 +417,7 @@ function AddGameScreen({ navigation }) {
         ]
       );
 
-      const game_id = gameInsertResult.lastInsertRowId;
+      game_id = gameInsertResult.lastInsertRowId;
 
       if (!game_id) {
         throw new Error("Failed to retrieve a valid game ID after inserting into games_fact.");
@@ -443,15 +448,61 @@ function AddGameScreen({ navigation }) {
       console.log('All events processed for game ID:', game_id);
 
       Alert.alert("Success", "Game results saved successfully!");
+
+    } catch (error) {
+      console.error("Error saving game results:", error);
+      Alert.alert("Error", `Failed to save game results: ${error.message}`);
+    }
+
+    // --- GOOGLE SHEETS SAVE (attempt after local DB save) ---
+    if (saveToLocalDbSuccess) {
+      try {
+        const rowData = [
+          new Date().toLocaleString(), // Timestamp
+          formData.mobileGame ? 'Yes' : 'No',
+          formData.difficulty,
+          formData.winLoss, // "Win" or "Loss"
+          formData.invaderCards,
+          formData.dahanPerSpirit,
+          formData.blightPerSpirit,
+          calculatedScore,
+          formData.notes,
+          formData.spirits
+            .filter(s => s.name)
+            .map(s => `${s.name}${s.aspect ? ` (${s.aspect})` : ''}`)
+            .join('; '),
+          formData.adversaries
+            .filter(a => a.name)
+            .map(a => `${a.name}${a.level !== null ? ` (L${a.level})` : ''}`)
+            .join('; '),
+          formData.scenarios
+            .filter(s => s.name)
+            .map(s => s.name)
+            .join('; '),
+        ];
+        // The `writeToGoogleSheet` function expects an array of arrays (rows)
+        const sheetSuccess = await writeToGoogleSheet([rowData]);
+
+        if (sheetSuccess) {
+          Alert.alert("Google Sheets", "Game results also written to Google Sheet!");
+        } else {
+          // writeToGoogleSheet already shows an alert for failure.
+          // We can log here for internal tracking.
+          console.warn("Failed to write to Google Sheet after successful local save (error handled by util).");
+        }
+      } catch (sheetsError) {
+        console.error("Unexpected error writing to Google Sheet:", sheetsError);
+        Alert.alert("Google Sheets Error", `An unexpected error occurred while writing to Google Sheet: ${sheetsError.message}`);
+      }
+    }
+
+    // Clear form only if local save was successful
+    if (saveToLocalDbSuccess) {
       setFormData({
         mobileGame: false, notes: '', difficulty: '', winLoss: null,
         invaderCards: '', dahanPerSpirit: '', blightPerSpirit: '',
         spirits: [{ name: null, id: null, aspect: null, aspect_id: null }], adversaries: [], scenarios: []
       });
-
-    } catch (error) {
-      console.error("Error saving game results:", error);
-      Alert.alert("Error", `Failed to save game results: ${error.message}`);
     }
   };
 
