@@ -2,10 +2,11 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import * as SecureStore from 'expo-secure-store';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 // !! IMPORTANT: Replace with your actual Client ID from GCP (Web Application type) !!
-const GOOGLE_CLIENT_ID_ANDROID = "482619125423-vesjmv9c64h9nvb21ua9fcpn4nqtccvp.apps.googleusercontent.com"; // e.g., "1234567890-abcdefg.apps.googleusercontent.com"
+const GOOGLE_CLIENT_ID = "482619125423-vesjmv9c64h9nvb21ua9fcpn4nqtccvp.apps.googleusercontent.com"; // e.g., "1234567890-abcdefg.apps.googleusercontent.com"
 
 // The scope for writing to Google Sheets
 const GOOGLE_SCOPES = [
@@ -33,9 +34,27 @@ const GOOGLE_SCOPES = [
 
 // --- CRITICAL CHANGE: Use your custom scheme for deep linking ---
 // This uses your custom scheme from app.json: `spiritislandtracker://`
-const REDIRECT_URI = AuthSession.makeRedirectUri({ scheme: 'spiritislandtracker' });
+// const REDIRECT_URI = AuthSession.makeRedirectUri({ scheme: 'spiritislandtracker' });
 // For Android, this typically results in: "com.yourname.spiritislandtracker:/oauthredirect"
 // For iOS, this typically results in: "spiritislandtracker://"
+let REDIRECT_URI = '';
+if (Platform.OS === 'android') {
+  const androidPackageName = Constants.manifest2?.extra?.expoClient?.android?.package || Constants.manifest?.android?.package;
+  if (!androidPackageName) {
+    console.error("Android package name not foind in app.json. AuthSession redirect will fail.")
+    REDIRECT_URI = AuthSession.makeRedirectUri({ scheme: 'spiritislandtracker' });
+  } else {
+    REDIRECT_URI = `android-app://${androidPackageName}`;
+  }
+} else {
+  REDIRECT_URI = AuthSession.makeRedirectUri({ useProxy: true });
+}
+
+console.log('--- AuthSession Config ---');
+console.log('App Platform:', Platform.OS);
+console.log('Resolved REDIRECT_URI (manual):', REDIRECT_URI);
+console.log('Used Google Client ID:', GOOGLE_CLIENT_ID);
+console.log('--------------------------');
 
 const DISCOVERY_DOCUMENT = {
   authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -75,7 +94,7 @@ const refreshAccessToken = async () => {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: GOOGLE_CLIENT_ID_ANDROID,
+        client_id: GOOGLE_CLIENT_ID,
         refresh_token: storedRefreshToken,
         grant_type: 'refresh_token',
       }).toString(),
@@ -144,7 +163,7 @@ export const getGoogleSheetsAccessToken = async () => {
   console.log('No valid Google Sheets tokens, initiating new authentication flow...');
   try {
     const authRequestOptions = {
-      clientId: GOOGLE_CLIENT_ID_ANDROID,
+      clientId: GOOGLE_CLIENT_ID,
       redirectUri: REDIRECT_URI,
       scopes: GOOGLE_SCOPES,
       responseType: AuthSession.ResponseType.Code,
@@ -163,7 +182,7 @@ export const getGoogleSheetsAccessToken = async () => {
       const tokenResponse = await AuthSession.exchangeCodeAsync(
         {
           code: authResult.authentication.code,
-          clientId: GOOGLE_CLIENT_ID_ANDROID,
+          clientId: GOOGLE_CLIENT_ID,
           redirectUri: REDIRECT_URI,
         },
         DISCOVERY_DOCUMENT
@@ -191,6 +210,9 @@ export const getGoogleSheetsAccessToken = async () => {
       return null;
     } else if (authResult.type === 'error') {
       console.error('Google Sheets authentication error:', authResult.error);
+      if (authResult.errorCode === 'invalid_request' && authResult.params?.redirect_uri) {
+        console.error('Error redirect_uri reported by Google:', authResult.params.redirect_uri);
+      }
       Alert.alert("Google Sheets Authentication Error", `Google sign-in failed: ${authResult.error}. Please check your internet connection and try again.`);
       return null;
     } else {
