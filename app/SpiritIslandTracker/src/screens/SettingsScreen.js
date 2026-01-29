@@ -12,6 +12,11 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import { db } from '../../App';
 import { updateAllMasterData } from '../utils/databaseUtils';
+import * as WebBrowser from "expo-web-browser";
+import * as Google from 'expo-auth-session/providers/google';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+WebBrowser.maybeCompleteAuthSession();
 
 // Helper function to generate CSV string from any array of objects
 const generateCsvFromObjects = (dataArray) => {
@@ -41,6 +46,11 @@ const generateCsvFromObjects = (dataArray) => {
 function SettingsScreen() {
   const [updatingMasterData, setUpdatingMasterData] = useState(false);
   const [copyingRaw, setCopyingRaw] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: "482619125423-tgkfsahpdlhhf24ctmfasfopg3esgnje.apps.googleusercontent.com",
+    webClientId: "482619125423-tn9p45ul26oibp73ebda9ua5lisrc2kp.apps.googleusercontent.com"
+  })
 
   const handleUpdateMasterData = async () => {
     if (!db) {
@@ -102,6 +112,18 @@ function SettingsScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Settings & Data Management</Text>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Connect to external database</Text>
+        <Text style={styles.sectionDescription}>
+          Sign in with google to authorise data send to external database (google sheets).
+        </Text>
+        <Button
+          title="Sign in with Google"
+          onPress={promptAsync}
+          disabled={updatingMasterData}
+        />
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Master Data Update</Text>
