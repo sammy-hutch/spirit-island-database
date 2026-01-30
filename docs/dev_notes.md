@@ -22,8 +22,10 @@ General TODO:
 - [ ] mobile game flag, game date flag, blight card flag, terror level counter
 
 App TODO:
-- update master data when app starts
-- write to gsheet when saving game data, or at least a batch way to do so
+- pull game_Fact and event_fact info in with master data update
+- app logo
+- text sting rendering error on viewResults page
+- improve appearance
 
 Accolades TODO
 | done | nominee | name | accolade |
