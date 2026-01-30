@@ -13,20 +13,30 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sammyhutch.SpiritIslandTracker"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.sammyhutch.SpiritIslandTracker"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "scheme": "SpiritIslandTracker",
     "plugins": [
-      "expo-sqlite"
-    ]
+      "expo-sqlite",
+      "expo-web-browser",
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ff268dec-663e-4668-9245-6229c79e0052"
+      }
+    }
   }
 }
