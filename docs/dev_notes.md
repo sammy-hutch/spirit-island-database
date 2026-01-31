@@ -33,3 +33,7 @@ Accolades TODO
 | | spirit pair | best of friends | most frequently paired together spirits |
 | | spirit pair | what does that make us? | most frequently play with the same spirit, but not with each other |
 | | spirit | the blight never bothered me anyway | highest score despite high blight ratio (possibly calculated with regression) |
+| | spirit | a refined strategy | least variation across scoring components (i.e. lest variation in blight from one game to another, same for dahan, etc |
+| | spirit | always trying something new | most variation across scoring components |
+| | adversary | focussed | least variation across scoring components |
+| | adversary | unpredicatable | most variation across scoring components |
