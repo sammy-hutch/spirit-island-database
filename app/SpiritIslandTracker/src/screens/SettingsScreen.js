@@ -6,12 +6,12 @@ import {
   StyleSheet,
   ActivityIndicator,
   Button,
-  Alert,
+  Alert, // Import Alert for the confirmation dialog
   ScrollView,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import * as FileSystem from 'expo-file-system'; // Added for export
-import * as Sharing from 'expo-sharing';       // Added for export
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { db } from '../../App';
 import { updateAllMasterData } from '../utils/databaseUtils';
 
@@ -173,21 +173,39 @@ function SettingsScreen() {
     }
   };
 
-  const handleUpdateMasterData = async () => {
-    if (!db) {
-      Alert.alert("Error", "Database not initialized. Please restart the app.");
-      return;
-    }
-    setUpdatingMasterData(true);
-    try {
-      await updateAllMasterData(db, true);
-      Alert.alert("Success", "Master data updated from Google Sheets!");
-    } catch (error) {
-      console.error("Error updating master data:", error);
-      Alert.alert("Update Failed", `Failed to update master data: ${error.message}`);
-    } finally {
-      setUpdatingMasterData(false);
-    }
+  // Modified handler for updating master data
+  const handleUpdateMasterData = () => {
+    Alert.alert(
+      "Confirm Master Data Update",
+      "Updating master data will overwrite all local data (including game entries) with data from Google Sheets. Are you sure you want to proceed?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+          onPress: () => console.log("Master Data Update Cancelled")
+        },
+        {
+          text: "Confirm",
+          onPress: async () => {
+            if (!db) {
+              Alert.alert("Error", "Database not initialized. Please restart the app.");
+              return;
+            }
+            setUpdatingMasterData(true);
+            try {
+              await updateAllMasterData(db, true);
+              Alert.alert("Success", "Master data updated from Google Sheets!");
+            } catch (error) {
+              console.error("Error updating master data:", error);
+              Alert.alert("Update Failed", `Failed to update master data: ${error.message}`);
+            } finally {
+              setUpdatingMasterData(false);
+            }
+          }
+        }
+      ],
+      { cancelable: true }
+    );
   };
 
   const copyGamesFactToClipboard = async () => {
@@ -308,7 +326,7 @@ function SettingsScreen() {
         </Text>
         <Button
           title={updatingMasterData ? "Updating..." : "Update All Master Data"}
-          onPress={handleUpdateMasterData}
+          onPress={handleUpdateMasterData} // Calls the new confirmation function
           disabled={updatingMasterData || copyingRaw || loadingCombinedExportData || exportingCombinedCSV}
         />
       </View>

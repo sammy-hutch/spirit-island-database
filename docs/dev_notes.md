@@ -27,7 +27,6 @@ App TODO:
 - text sting rendering error on viewResults page
 - improve appearance
 - "Spirit Island Game Tracker" text at top: centre it
-- pop-up on "update all master data" button to make sur euser really wants to
 - add space between scenariop add button and played on mobile toggle
 - on viewresults screen, green boxes for won games, red for losses
 
