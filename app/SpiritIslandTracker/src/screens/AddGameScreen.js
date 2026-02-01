@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import { useFocusEffect } from '@react-navigation/native';
+import DateTimePicker from '@react-native-community/datetimepicker'; // Import DateTimePicker
 
 import { db } from '../../App';
 
@@ -141,7 +142,6 @@ const ScenarioEntry = ({
   );
 };
 
-
 function AddGameScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [masterData, setMasterData] = useState({
@@ -151,8 +151,15 @@ function AddGameScreen({ navigation }) {
     allAspectsMap: {},
   });
 
+  // State for date picker visibility
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Initialize formData with new fields and their default values
   const [formData, setFormData] = useState({
     mobileGame: false,
+    gameDate: new Date(), // Default to today's date
+    islandHealthy: true, // Default to true
+    terrorLevel: 1, // Default to 1
     notes: '',
     difficulty: '',
     winLoss: null,
@@ -171,7 +178,7 @@ function AddGameScreen({ navigation }) {
     const ds = parseInt(formData.dahanPerSpirit || 0);
     const bs = parseInt(formData.blightPerSpirit || 0);
     return d + wl + ic + ds - bs;
-  }, [formData.difficulty, formData.invaderCards, formData.dahanPerSpirit, formData.blightPerSpirit]);
+  }, [formData.difficulty, formData.invaderCards, formData.dahanPerSpirit, formData.blightPerSpirit, formData.winLoss]); // Added winLoss to dependencies
 
   const fetchMasterData = useCallback(async () => {
     setLoading(true);
@@ -183,24 +190,24 @@ function AddGameScreen({ navigation }) {
       }
 
       const spiritsResult = await db.getAllAsync(`SELECT spirit_name, spirit_id FROM spirits_dim ORDER BY spirit_name ASC;`);
-      const spiritOptions = spiritsResult.map(row => ({ 
-        label: row.spirit_name, 
+      const spiritOptions = spiritsResult.map(row => ({
+        label: row.spirit_name,
         value: row.spirit_name,
         id: row.spirit_id
-       }));
+      }));
 
       const adversariesResult = await db.getAllAsync(`SELECT adversary_name, adversary_id FROM adversaries_dim ORDER BY adversary_name ASC;`);
-      const adversaryOptions = adversariesResult.map(row => ({ 
-        label: row.adversary_name, 
+      const adversaryOptions = adversariesResult.map(row => ({
+        label: row.adversary_name,
         value: row.adversary_name,
-        id: row.adversary_id 
+        id: row.adversary_id
       }));
 
       const scenariosResult = await db.getAllAsync(`SELECT scenario_name, scenario_id FROM scenarios_dim ORDER BY scenario_name ASC;`);
-      const scenarioOptions = scenariosResult.map(row => ({ 
-        label: row.scenario_name, 
+      const scenarioOptions = scenariosResult.map(row => ({
+        label: row.scenario_name,
         value: row.scenario_name,
-        id: row.scenario_id 
+        id: row.scenario_id
       }));
 
       const aspectsResult = await db.getAllAsync(`SELECT aspect_name, aspect_id, spirit_name FROM aspects_dim a LEFT JOIN spirits_dim s ON a.spirit_id = s.spirit_id;`);
@@ -209,11 +216,11 @@ function AddGameScreen({ navigation }) {
           if (!acc[row.spirit_name]) {
             acc[row.spirit_name] = [];
           }
-          acc[row.spirit_name].push({ 
-            label: row.aspect_name, 
+          acc[row.spirit_name].push({
+            label: row.aspect_name,
             value: row.aspect_name,
             id: row.aspect_id
-           });
+          });
         }
         return acc;
       }, {});
@@ -241,6 +248,17 @@ function AddGameScreen({ navigation }) {
 
   const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Date Picker Handlers
+  const onChangeDate = (event, selectedDate) => {
+    const currentDate = selectedDate || formData.gameDate;
+    setShowDatePicker(Platform.OS === 'ios'); // On iOS, picker stays open unless explicitly dismissed
+    setFormData(prev => ({ ...prev, gameDate: currentDate }));
+  };
+
+  const showDatepicker = () => {
+    setShowDatePicker(true);
   };
 
   const addSpiritEntry = () => {
@@ -323,11 +341,12 @@ function AddGameScreen({ navigation }) {
       const newAdversaries = [...prev.adversaries];
       const selectedAdversaryOption = masterData.adversaryOptions.find(option => option.value === value);
       const adversaryId = selectedAdversaryOption ? selectedAdversaryOption.id : null;
-      newAdversaries[index] = { 
+      newAdversaries[index] = {
         ...newAdversaries[index],
-        name: value, 
+        name: value,
         id: adversaryId,
-        level: null };
+        level: null
+      };
       return { ...prev, adversaries: newAdversaries };
     });
   };
@@ -390,18 +409,27 @@ function AddGameScreen({ navigation }) {
         return;
       }
     }
+    if (!formData.gameDate) {
+      Alert.alert("Validation Error", "Please select the date the game was played.");
+      return;
+    }
+    if (formData.terrorLevel === null) {
+      Alert.alert("Validation Error", "Please select a terror level.");
+      return;
+    }
 
     try {
       // log game data
       const calculatedScore = totalScore();
-      const game_score = formData.winLoss === 'Win' ? 10 : 0
+      const game_score = formData.winLoss === 'Win' ? 10 : 0;
+      const formattedGameDate = formData.gameDate.toISOString().split('T')[0]; // YYYY-MM-DD
 
       const gameInsertResult = await db.runAsync(
         `INSERT INTO games_fact (
-        game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, game_info
-      ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+        game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
+        game_info, game_date, game_island_health, game_terror_level, game_mobile
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
-          //formData.mobileGame ? 1 : 0,
           parseInt(formData.difficulty || 0),
           game_score,
           parseInt(formData.invaderCards || 0),
@@ -409,6 +437,10 @@ function AddGameScreen({ navigation }) {
           parseInt(formData.blightPerSpirit || 0),
           calculatedScore,
           formData.notes,
+          formattedGameDate,
+          formData.islandHealthy ? 1 : 0,
+          formData.terrorLevel,
+          formData.mobileGame ? 1 : 0,
         ]
       );
 
@@ -443,9 +475,18 @@ function AddGameScreen({ navigation }) {
       console.log('All events processed for game ID:', game_id);
 
       Alert.alert("Success", "Game results saved successfully!");
+      // Reset form data after successful save
       setFormData({
-        mobileGame: false, notes: '', difficulty: '', winLoss: null,
-        invaderCards: '', dahanPerSpirit: '', blightPerSpirit: '',
+        mobileGame: false,
+        gameDate: new Date(),
+        islandHealthy: true,
+        terrorLevel: 1,
+        notes: '',
+        difficulty: '',
+        winLoss: null,
+        invaderCards: '',
+        dahanPerSpirit: '',
+        blightPerSpirit: '',
         spirits: [{ name: null, id: null, aspect: null, aspect_id: null }], adversaries: [], scenarios: []
       });
 
@@ -464,6 +505,11 @@ function AddGameScreen({ navigation }) {
     );
   }
 
+  const terrorLevelOptions = Array.from({ length: 4 }, (_, i) => ({
+    label: `Level ${i + 1}`,
+    value: i + 1,
+  }));
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -471,6 +517,26 @@ function AddGameScreen({ navigation }) {
     >
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Record New Game</Text>
+
+        {/* Date Played */}
+        <Text style={styles.label}>Date Played:</Text>
+        <Button onPress={showDatepicker} title="Select Date" />
+        <TextInput
+          style={styles.input}
+          value={formData.gameDate.toLocaleDateString()} // Display formatted date
+          editable={false} // Make it read-only, user uses button to open picker
+          pointerEvents="none" // Prevents focus if somehow clicked
+        />
+        {showDatePicker && (
+          <DateTimePicker
+            testID="dateTimePicker"
+            value={formData.gameDate}
+            mode="date"
+            is24Hour={true}
+            display="default"
+            onChange={onChangeDate}
+          />
+        )}
 
         {/* Mobile Game Flag */}
         <View style={styles.row}>
@@ -480,6 +546,25 @@ function AddGameScreen({ navigation }) {
             onValueChange={(value) => handleFormChange('mobileGame', value)}
           />
         </View>
+
+        {/* Island Healthy Toggle */}
+        <View style={styles.row}>
+          <Text style={styles.label}>Island Healthy (game end):</Text>
+          <Switch
+            value={formData.islandHealthy}
+            onValueChange={(value) => handleFormChange('islandHealthy', value)}
+          />
+        </View>
+
+        {/* Terror Level Picker */}
+        <Text style={styles.label}>Terror Level (game end):</Text>
+        <RNPickerSelect
+          onValueChange={(value) => handleFormChange('terrorLevel', value)}
+          items={terrorLevelOptions}
+          value={formData.terrorLevel}
+          placeholder={{ label: 'Select Terror Level...', value: null }}
+          style={pickerSelectStyles}
+        />
 
         {/* Notes */}
         <Text style={styles.label}>Notes:</Text>

@@ -39,7 +39,11 @@ const initializeDatabase = async () => {
        game_dahan INTEGER,
        game_blight INTEGER,
        game_score INTEGER,
-       game_info TEXT
+       game_info TEXT,
+       game_date TEXT,
+       game_island_health INTEGER,
+       game_terror_level INTEGER,
+       game_mobile INTEGER
      );`,
       `CREATE TABLE IF NOT EXISTS events_fact (
        event_id INTEGER PRIMARY KEY AUTOINCREMENT,
