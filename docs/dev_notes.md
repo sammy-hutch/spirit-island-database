@@ -22,10 +22,13 @@ General TODO:
 - [ ] incorportate mobile game flag, game date flag, blight card flag, terror level counter into dashboard and database
 
 App TODO:
-- pull game_Fact and event_fact info in with master data update
 - app logo
 - improve appearance
 - on viewresults screen, green boxes for won games, red for losses
+- tidy up code comments
+- playtest flag
+- make nulls not default to no, don't show adversaries/scenarios on game results if not present
+- handle negative value of blight
 
 Accolades TODO
 | done | nominee | name | accolade |
