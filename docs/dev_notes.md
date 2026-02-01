@@ -19,7 +19,7 @@ components:
 General TODO:
 - [ ] unit tests and data tests
 - [ ] docstrings
-- [ ] mobile game flag, game date flag, blight card flag, terror level counter
+- [ ] incorportate mobile game flag, game date flag, blight card flag, terror level counter into dashboard and database
 
 App TODO:
 - pull game_Fact and event_fact info in with master data update

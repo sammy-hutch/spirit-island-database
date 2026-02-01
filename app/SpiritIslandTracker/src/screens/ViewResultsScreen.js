@@ -11,9 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
-import * as Clipboard from 'expo-clipboard';
+// Removed FileSystem, Sharing, Clipboard imports as they are no longer needed here
 import { db } from '../../App';
 
 const GameItem = ({ game }) => {
@@ -75,7 +73,7 @@ const GameItem = ({ game }) => {
 function ViewResultsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [gameData, setGameData] = useState([]);
-  const [exporting, setExporting] = useState(false);
+  // Removed 'exporting' state
 
   const fetchGameData = useCallback(async () => {
     if (!db) {
@@ -90,7 +88,7 @@ function ViewResultsScreen({ navigation }) {
         game_id, 
         game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
         game_info, game_date, game_island_health, game_terror_level, game_mobile
-      FROM games_fact ORDER BY game_id DESC;` // Added new columns here
+      FROM games_fact ORDER BY game_id DESC;`
       );
 
       const combinedData = [];
@@ -152,119 +150,11 @@ function ViewResultsScreen({ navigation }) {
     }, [fetchGameData])
   );
 
-  const generateCombinedGameCSV = (data) => {
-    const headers = [
-      "ID",
-      "Difficulty", "Win/Loss", "Invader Cards", "Dahan Health", "Blight on Boards", "Total Score",
-      "Notes", "Date Played", "Mobile Game", "Island Healthy", "Terror Level", 
-      "Spirits (Aspects)", "Adversaries (Levels)", "Scenarios"
-    ];
-
-    const rows = data.map(game => {
-      const spiritString = game.spirits
-        .map(s => `${s.spirit_name}${s.aspect_name ? ` (${s.aspect_name})` : ''}`)
-        .join('; ');
-
-      const adversaryString = game.adversaries
-        .map(a => `${a.adversary_name}${a.adversary_level !== null ? ` (L${a.adversary_level})` : ''}`)
-        .join('; ');
-
-      const scenarioString = game.scenarios
-        .map(s => s.scenario_name)
-        .join('; ');
-
-      const escape = (field) => {
-        if (field === null || field === undefined) return '';
-        let str = String(field);
-        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes(';')) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      };
-
-      return [
-        game.game_id,
-        game.game_difficulty,
-        game.game_win === 10 ? 'Win' : 'Loss', // Format win/loss
-        game.game_cards,
-        game.game_dahan,
-        game.game_blight,
-        game.game_score,
-        game.game_info,
-        game.game_date,
-        game.island_healthy === 1 ? 'Yes' : 'No', // Format boolean
-        game.terror_level,
-        game.game_mobile === 1 ? 'Yes' : 'No', // Format boolean
-        spiritString,
-        adversaryString,
-        scenarioString,
-      ].map(escape).join(',');
-    });
-
-    return [headers.map(escape).join(','), ...rows].join('\n');
-  };
-
-  const exportToCSV = async () => {
-    if (gameData.length === 0) {
-      Alert.alert("No Data", "There are no game results to export.");
-      return;
-    }
-    setExporting(true);
-    try {
-      const csvString = generateCombinedGameCSV(gameData);
-      const filename = `SpiritIslandResults_${Date.now()}.csv`;
-      const fileUri = FileSystem.cacheDirectory + filename;
-
-      // expo-file-system's File.writeAsStringAsync expects a string for the path, not a File object directly
-      await FileSystem.writeAsStringAsync(fileUri, csvString, { encoding: FileSystem.EncodingType.UTF8 });
-
-      if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert("Sharing not available", "Sharing is not available on your device. You can still copy to clipboard.");
-        return;
-      }
-
-      await Sharing.shareAsync(fileUri, {
-        mimeType: 'text/csv',
-        dialogTitle: 'Share Spirit Island Results CSV',
-        UTI: 'public.comma-separated-values'
-      });
-      Alert.alert("Export Successful", "CSV file exported and shared.");
-    } catch (error) {
-      console.error("Error exporting CSV:", error);
-      Alert.alert("Export Failed", `Could not export CSV: ${error.message}`);
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const copyCombinedToClipboard = async () => {
-    if (gameData.length === 0) {
-      Alert.alert("No Data", "There are no game results to copy.");
-      return;
-    }
-    try {
-      const csvString = generateCombinedGameCSV(gameData);
-      await Clipboard.setStringAsync(csvString);
-      Alert.alert("Copied to Clipboard", "Combined game results copied as CSV to clipboard.");
-    } catch (error) {
-      console.error("Error copying to clipboard:", error);
-      Alert.alert("Copy Failed", `Could not copy to clipboard: ${error.message}`);
-    }
-  };
+  // Removed generateCombinedGameCSV, exportToCSV, copyCombinedToClipboard
 
   return (
     <View style={styles.screenContainer}>
       <View style={styles.buttonContainer}>
-        <Button
-          title={exporting ? "Exporting..." : "Export All Games CSV"}
-          onPress={exportToCSV}
-          disabled={exporting || gameData.length === 0}
-        />
-        <Button
-          title="Copy All Games CSV"
-          onPress={copyCombinedToClipboard}
-          disabled={gameData.length === 0}
-        />
         <Button
           title="Add New Game"
           onPress={() => navigation.navigate('AddGameTab')}
@@ -301,9 +191,9 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   buttonContainer: {
+    // Adjusted to center the single button or allow for future additions
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
+    justifyContent: 'center', // Changed from 'space-around'
     marginBottom: 20,
     paddingVertical: 10,
     borderBottomWidth: 1,
