@@ -523,9 +523,9 @@ function AddGameScreen({ navigation }) {
         <Button onPress={showDatepicker} title="Select Date" />
         <TextInput
           style={styles.input}
-          value={formData.gameDate.toLocaleDateString()} // Display formatted date
-          editable={false} // Make it read-only, user uses button to open picker
-          pointerEvents="none" // Prevents focus if somehow clicked
+          value={formData.gameDate.toLocaleDateString()}
+          editable={false}
+          pointerEvents="none"
         />
         {showDatePicker && (
           <DateTimePicker
@@ -646,6 +646,9 @@ function AddGameScreen({ navigation }) {
         {formData.scenarios.length < 2 && (
           <Button title="Add Scenario" onPress={addScenarioEntry} />
         )}
+
+        {/* NEW SECTION TITLE ADDED HERE FOR SPACING */}
+        <Text style={styles.sectionTitle}>Game Details:</Text>
 
         {/* Mobile Game Flag */}
         <View style={styles.row}>

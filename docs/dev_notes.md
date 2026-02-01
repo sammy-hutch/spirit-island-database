@@ -24,10 +24,8 @@ General TODO:
 App TODO:
 - pull game_Fact and event_fact info in with master data update
 - app logo
-- text sting rendering error on viewResults page
 - improve appearance
 - "Spirit Island Game Tracker" text at top: centre it
-- add space between scenariop add button and played on mobile toggle
 - on viewresults screen, green boxes for won games, red for losses
 
 Accolades TODO
