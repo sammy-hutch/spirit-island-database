@@ -25,7 +25,6 @@ App TODO:
 - pull game_Fact and event_fact info in with master data update
 - app logo
 - improve appearance
-- "Spirit Island Game Tracker" text at top: centre it
 - on viewresults screen, green boxes for won games, red for losses
 
 Accolades TODO

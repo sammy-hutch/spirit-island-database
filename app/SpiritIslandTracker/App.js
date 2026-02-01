@@ -152,6 +152,7 @@ function AppContent() {
             fontSize: 20,
             color: "#333",
           },
+          headerTitleAlign: 'center',
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
             if (route.name === "AddGameTab") {
