@@ -305,7 +305,6 @@ function SettingsScreen() {
         <Text style={styles.sectionTitle}>Master Data Update</Text>
         <Text style={styles.sectionDescription}>
           Pull the latest Spirits, Aspects, Adversaries, and Scenarios from your Google Sheets.
-          This happens automatically on first app launch (if tables are empty), but you can force an update here.
         </Text>
         <Button
           title={updatingMasterData ? "Updating..." : "Update All Master Data"}
@@ -317,7 +316,7 @@ function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Export Game Data</Text>
         <Text style={styles.sectionDescription}>
-          Export all recorded game results, including spirits, adversaries, and scenarios.
+          Export all recorded game results.
         </Text>
         <View style={styles.buttonGroup}>
           <Button
@@ -337,7 +336,7 @@ function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Export Raw Table Data</Text>
         <Text style={styles.sectionDescription}>
-          Copy raw table data (games_fact and events_fact) to your clipboard as CSV. This is primarily for debugging or advanced data analysis.
+          Copy raw table data (games_fact and events_fact) to your clipboard as CSV.
         </Text>
         <View style={styles.buttonGroup}>
           <Button

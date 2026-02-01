@@ -21,12 +21,12 @@ const GameItem = ({ game }) => {
 
   return (
     <View style={styles.gameItemContainer}>
-      <Text style={styles.gameItemTitle}>Game ID: {game.game_id} - {game.game_date}</Text>
+      <Text style={styles.gameItemTitle}>Game: {game.game_id} - {game.game_date}</Text>
       <Text>Outcome: {formatWinLoss(game.game_win)} | Difficulty: {game.game_difficulty} | Score: {game.game_score}</Text>
       <Text>
         Mobile Game: {formatBoolean(game.game_mobile)} |
-        Island Healthy: {formatBoolean(game.island_healthy)} |
-        Terror Level: {game.terror_level}
+        Island Healthy: {formatBoolean(game.game_island_health)} |
+        Terror Level: {game.game_terror_level}
       </Text>
       {game.game_info ? <Text>Notes: {game.game_info}</Text> : null}
 
@@ -64,7 +64,7 @@ const GameItem = ({ game }) => {
       )}
 
       <Text style={styles.scoreDetails}>
-        Invader Cards: {game.game_cards}, Dahan Health: {game.game_dahan}, Blight: {game.game_blight}
+        Invader Cards: {game.game_cards}, Dahan (/spirit): {game.game_dahan}, Blight (/spirit): {game.game_blight}
       </Text>
     </View>
   );

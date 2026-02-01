@@ -538,45 +538,6 @@ function AddGameScreen({ navigation }) {
           />
         )}
 
-        {/* Mobile Game Flag */}
-        <View style={styles.row}>
-          <Text style={styles.label}>Played on Mobile:</Text>
-          <Switch
-            value={formData.mobileGame}
-            onValueChange={(value) => handleFormChange('mobileGame', value)}
-          />
-        </View>
-
-        {/* Island Healthy Toggle */}
-        <View style={styles.row}>
-          <Text style={styles.label}>Island Healthy (game end):</Text>
-          <Switch
-            value={formData.islandHealthy}
-            onValueChange={(value) => handleFormChange('islandHealthy', value)}
-          />
-        </View>
-
-        {/* Terror Level Picker */}
-        <Text style={styles.label}>Terror Level (game end):</Text>
-        <RNPickerSelect
-          onValueChange={(value) => handleFormChange('terrorLevel', value)}
-          items={terrorLevelOptions}
-          value={formData.terrorLevel}
-          placeholder={{ label: 'Select Terror Level...', value: null }}
-          style={pickerSelectStyles}
-        />
-
-        {/* Notes */}
-        <Text style={styles.label}>Notes:</Text>
-        <TextInput
-          style={styles.textArea}
-          multiline
-          numberOfLines={4}
-          value={formData.notes}
-          onChangeText={(text) => handleFormChange('notes', text)}
-          placeholder="Any additional notes about the game..."
-        />
-
         {/* Game Score Data */}
         <Text style={styles.sectionTitle}>Game Score Data:</Text>
 
@@ -601,7 +562,7 @@ function AddGameScreen({ navigation }) {
           style={pickerSelectStyles}
         />
 
-        <Text style={styles.label}>Invader Cards (remaining):</Text>
+        <Text style={styles.label}>Invader Cards:</Text>
         <TextInput
           style={styles.input}
           keyboardType="numeric"
@@ -610,7 +571,7 @@ function AddGameScreen({ navigation }) {
           placeholder="e.g., 2"
         />
 
-        <Text style={styles.label}>Dahan Health (remaining):</Text>
+        <Text style={styles.label}>Dahan on Island (per Spirit):</Text>
         <TextInput
           style={styles.input}
           keyboardType="numeric"
@@ -619,7 +580,7 @@ function AddGameScreen({ navigation }) {
           placeholder="e.g., 5"
         />
 
-        <Text style={styles.label}>Blight on Spirit Boards:</Text>
+        <Text style={styles.label}>Blight on Island (per Spirit):</Text>
         <TextInput
           style={styles.input}
           keyboardType="numeric"
@@ -685,6 +646,45 @@ function AddGameScreen({ navigation }) {
         {formData.scenarios.length < 2 && (
           <Button title="Add Scenario" onPress={addScenarioEntry} />
         )}
+
+        {/* Mobile Game Flag */}
+        <View style={styles.row}>
+          <Text style={styles.label}>Played on Mobile:</Text>
+          <Switch
+            value={formData.mobileGame}
+            onValueChange={(value) => handleFormChange('mobileGame', value)}
+          />
+        </View>
+
+        {/* Island Healthy Toggle */}
+        <View style={styles.row}>
+          <Text style={styles.label}>Island Healthy:</Text>
+          <Switch
+            value={formData.islandHealthy}
+            onValueChange={(value) => handleFormChange('islandHealthy', value)}
+          />
+        </View>
+
+        {/* Terror Level Picker */}
+        <Text style={styles.label}>Terror Level:</Text>
+        <RNPickerSelect
+          onValueChange={(value) => handleFormChange('terrorLevel', value)}
+          items={terrorLevelOptions}
+          value={formData.terrorLevel}
+          placeholder={{ label: 'Select Terror Level...', value: null }}
+          style={pickerSelectStyles}
+        />
+
+        {/* Notes */}
+        <Text style={styles.label}>Notes:</Text>
+        <TextInput
+          style={styles.textArea}
+          multiline
+          numberOfLines={4}
+          value={formData.notes}
+          onChangeText={(text) => handleFormChange('notes', text)}
+          placeholder="Any additional notes about the game..."
+        />
 
         <View style={styles.saveButtonContainer}>
           <Button title="Save Game Results" onPress={handleSaveGame} />
