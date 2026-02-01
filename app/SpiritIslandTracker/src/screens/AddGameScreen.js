@@ -423,6 +423,7 @@ function AddGameScreen({ navigation }) {
       const calculatedScore = totalScore();
       const game_score = formData.winLoss === 'Win' ? 10 : 0;
       const formattedGameDate = formData.gameDate.toISOString().split('T')[0]; // YYYY-MM-DD
+      const blightValue = parseInt(formData.blightPerSpirit || 0) * -1;
 
       const gameInsertResult = await db.runAsync(
         `INSERT INTO games_fact (
@@ -434,7 +435,7 @@ function AddGameScreen({ navigation }) {
           game_score,
           parseInt(formData.invaderCards || 0),
           parseInt(formData.dahanPerSpirit || 0),
-          parseInt(formData.blightPerSpirit || 0),
+          blightValue,
           calculatedScore,
           formData.notes,
           formattedGameDate,

@@ -28,7 +28,6 @@ App TODO:
 - tidy up code comments
 - playtest flag
 - make nulls not default to no, don't show adversaries/scenarios on game results if not present
-- handle negative value of blight
 
 Accolades TODO
 | done | nominee | name | accolade |
