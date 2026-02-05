@@ -26,7 +26,6 @@ App TODO:
 - improve appearance
 - on viewresults screen, green boxes for won games, red for losses
 - tidy up code comments
-- playtest flag
 - make nulls not default to no, don't show adversaries/scenarios on game results if not present
 
 Accolades TODO

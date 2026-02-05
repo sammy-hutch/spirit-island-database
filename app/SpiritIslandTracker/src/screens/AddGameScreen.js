@@ -157,6 +157,7 @@ function AddGameScreen({ navigation }) {
   // Initialize formData with new fields and their default values
   const [formData, setFormData] = useState({
     mobileGame: false,
+    playtest: false,
     gameDate: new Date(), // Default to today's date
     islandHealthy: true, // Default to true
     terrorLevel: 1, // Default to 1
@@ -427,9 +428,9 @@ function AddGameScreen({ navigation }) {
 
       const gameInsertResult = await db.runAsync(
         `INSERT INTO games_fact (
-        game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
-        game_info, game_date, game_island_health, game_terror_level, game_mobile
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
+          game_info, game_date, game_island_health, game_terror_level, game_mobile, game_playtest
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
           parseInt(formData.difficulty || 0),
           game_score,
@@ -442,6 +443,7 @@ function AddGameScreen({ navigation }) {
           formData.islandHealthy ? 1 : 0,
           formData.terrorLevel,
           formData.mobileGame ? 1 : 0,
+          formData.playtest ? 1 : 0,
         ]
       );
 
@@ -479,6 +481,7 @@ function AddGameScreen({ navigation }) {
       // Reset form data after successful save
       setFormData({
         mobileGame: false,
+        playtest: false,
         gameDate: new Date(),
         islandHealthy: true,
         terrorLevel: 1,
@@ -657,6 +660,15 @@ function AddGameScreen({ navigation }) {
           <Switch
             value={formData.mobileGame}
             onValueChange={(value) => handleFormChange('mobileGame', value)}
+          />
+        </View>
+
+        {/* Playtest Flag */}
+        <View style={styles.row}>
+          <Text style={styles.label}>Playtest:</Text>
+          <Switch
+            value={formData.playtest}
+            onValueChange={(value) => handleFormChange('playtest', value)}
           />
         </View>
 

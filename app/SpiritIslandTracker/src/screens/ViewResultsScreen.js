@@ -23,12 +23,6 @@ const GameItem = ({ game }) => {
     <View style={styles.gameItemContainer}>
       <Text style={styles.gameItemTitle}>Game: {game.game_id} - {game.game_date}</Text>
       <Text>Outcome: {formatWinLoss(game.game_win)} | Difficulty: {game.game_difficulty} | Score: {game.game_score}</Text>
-      <Text>
-        Mobile Game: {formatBoolean(game.game_mobile)} |
-        Island Healthy: {formatBoolean(game.game_island_health)} |
-        Terror Level: {game.game_terror_level}
-      </Text>
-      {game.game_info ? <Text>Notes: {game.game_info}</Text> : null}
 
       {game.spirits && game.spirits.length > 0 && (
         <View style={styles.detailSection}>
@@ -66,6 +60,13 @@ const GameItem = ({ game }) => {
       <Text style={styles.scoreDetails}>
         Invader Cards: {game.game_cards}, Dahan (/spirit): {game.game_dahan}, Blight (/spirit): {game.game_blight}
       </Text>
+      <Text style={styles.scoreDetails}>
+        Mobile Game: {formatBoolean(game.game_mobile)} |
+        Island Healthy: {formatBoolean(game.game_island_health)} |
+        Terror Level: {game.game_terror_level} |
+        Playtest: {formatBoolean(game.game_playtest)}
+      </Text>
+      {game.game_info ? <Text>Notes: {game.game_info}</Text> : null}
     </View>
   );
 };
@@ -87,7 +88,7 @@ function ViewResultsScreen({ navigation }) {
         `SELECT
         game_id, 
         game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
-        game_info, game_date, game_island_health, game_terror_level, game_mobile
+        game_info, game_date, game_island_health, game_terror_level, game_mobile, game_playtest
       FROM games_fact ORDER BY game_id DESC;`
       );
 
