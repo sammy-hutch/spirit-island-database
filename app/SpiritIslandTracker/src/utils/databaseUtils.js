@@ -66,24 +66,35 @@ export const updateAllMasterData = async (databaseInstance, forceUpdate = false)
       const url = googleSheetUrls[type];
 
       let table = null;
+      let nullableIntegerFields = []; // Fields that should be NULL if empty
       switch (type) {
         case "spirit":
           table = "spirits_dim";
+          // No nullable INTEGER fields in spirits_dim from CSV that are not PK
           break;
         case "adversary":
           table = "adversaries_dim";
+          // No nullable INTEGER fields in adversaries_dim from CSV that are not PK
           break;
         case "scenario":
           table = "scenarios_dim";
+          // scenario_difficulty is INTEGER, but if empty, 0 might be desired, not NULL
+          // If you want NULL for empty difficulty, add 'scenario_difficulty' here.
           break;
         case "aspect":
           table = "aspects_dim";
+          // spirit_id is INTEGER, but typically required for aspects
           break;
         case "game":
           table = "games_fact";
+          // These are INTEGER columns in games_fact that are optional and should be NULL if empty
+          nullableIntegerFields = ['game_island_health', 'game_mobile', 'game_playtest', 'game_terror_level'];
           break;
         case "event":
           table = "events_fact";
+          // These are INTEGER FKs in events_fact that are optional and should be NULL if empty
+          // spirit_id is NOT NULL in schema, so not included.
+          nullableIntegerFields = ['aspect_id', 'adversary_id', 'scenario_id', 'adversary_level']; // adversary_level can also be null if adversary is null
           break;
         default:
           console.warn(`Skipping unknown master data type: ${type}`);
@@ -111,7 +122,6 @@ export const updateAllMasterData = async (databaseInstance, forceUpdate = false)
         continue;
       }
 
-      // Use the new parseCsvLine function for headers
       const headers = parseCsvLine(rows[0]);
       const dataRows = rows.slice(1);
 
@@ -120,7 +130,6 @@ export const updateAllMasterData = async (databaseInstance, forceUpdate = false)
       console.log(`Deleted old '${type}' data.`);
 
       for (const row of dataRows) {
-        // Use the new parseCsvLine function for data values
         const values = parseCsvLine(row);
 
         if (values.length !== headers.length) {
@@ -128,11 +137,21 @@ export const updateAllMasterData = async (databaseInstance, forceUpdate = false)
           continue;
         }
 
-        const placeholders = values.map(() => '?').join(', ');
+        // --- IMPORTANT: New logic to process values for NULLABLE INTEGER fields ---
+        const processedValues = values.map((val, index) => {
+          const header = headers[index];
+          if (val === '' && nullableIntegerFields.includes(header)) {
+            return null; // Explicitly return null for empty values in specified integer columns
+          }
+          return val; // Otherwise, keep the value as is
+        });
+        // --- End of new logic ---
+
+        const placeholders = processedValues.map(() => '?').join(', ');
         const columnNames = headers.join(', ');
         const insert_statement = `INSERT OR IGNORE INTO ${table} (${columnNames}) VALUES (${placeholders});`;
 
-        await databaseInstance.runAsync(insert_statement, values);
+        await databaseInstance.runAsync(insert_statement, processedValues); // Use processedValues
       }
       console.log(`Inserted ${dataRows.length} '${type}' records.`);
     }

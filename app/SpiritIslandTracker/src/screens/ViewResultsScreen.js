@@ -15,8 +15,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import { db } from '../../App';
 
 const GameItem = ({ game }) => {
-  // Helper to convert 0/1 to Yes/No
-  const formatBoolean = (value) => (value === 1 ? 'Yes' : 'No');
+  // Helper to convert 0/1 to Yes/No, and null to an empty string or 'N/A'
+  const formatBoolean = (value) => {
+    if (value === 1) return 'Yes';
+    if (value === 0) return 'No';
+    return ''; // Treat null/undefined/other as empty string (or 'N/A' if preferred)
+  };
   const formatWinLoss = (value) => (value === 10 ? 'Win' : 'Loss');
 
   return (
@@ -35,10 +39,11 @@ const GameItem = ({ game }) => {
         </View>
       )}
 
-      {game.adversaries && game.adversaries.length > 0 && (
+      {/* IMPORTANT: Add filter for non-null names before checking length and mapping */}
+      {game.adversaries && game.adversaries.filter(a => a.adversary_name).length > 0 && (
         <View style={styles.detailSection}>
           <Text style={styles.detailTitle}>Adversaries:</Text>
-          {game.adversaries.map((a, idx) => (
+          {game.adversaries.filter(a => a.adversary_name).map((a, idx) => (
             <Text key={idx} style={styles.detailText}>
               • {a.adversary_name} (Level {a.adversary_level})
             </Text>
@@ -46,10 +51,11 @@ const GameItem = ({ game }) => {
         </View>
       )}
 
-      {game.scenarios && game.scenarios.length > 0 && (
+      {/* IMPORTANT: Add filter for non-null names before checking length and mapping */}
+      {game.scenarios && game.scenarios.filter(s => s.scenario_name).length > 0 && (
         <View style={styles.detailSection}>
           <Text style={styles.detailTitle}>Scenarios:</Text>
-          {game.scenarios.map((s, idx) => (
+          {game.scenarios.filter(s => s.scenario_name).map((s, idx) => (
             <Text key={idx} style={styles.detailText}>
               • {s.scenario_name}
             </Text>
@@ -63,7 +69,7 @@ const GameItem = ({ game }) => {
       <Text style={styles.scoreDetails}>
         Mobile Game: {formatBoolean(game.game_mobile)} |
         Island Healthy: {formatBoolean(game.game_island_health)} |
-        Terror Level: {game.game_terror_level} |
+        Terror Level: {game.game_terror_level !== null ? game.game_terror_level : ''} | {/* Also handle terror_level if it's null */}
         Playtest: {formatBoolean(game.game_playtest)}
       </Text>
       {game.game_info ? <Text>Notes: {game.game_info}</Text> : null}

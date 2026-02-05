@@ -26,7 +26,7 @@ App TODO:
 - improve appearance
 - on viewresults screen, green boxes for won games, red for losses
 - tidy up code comments
-- make nulls not default to no, don't show adversaries/scenarios on game results if not present
+- hide mobilegame, islandhealthy, other deets etc if no data for them (same as notes) on viewresultscresn
 
 Accolades TODO
 | done | nominee | name | accolade |
