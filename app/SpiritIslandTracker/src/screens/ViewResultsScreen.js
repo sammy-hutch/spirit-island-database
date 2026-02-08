@@ -9,30 +9,38 @@ import {
   Button,
   Alert,
   Platform,
+  ImageBackground, // Added ImageBackground
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-// Removed FileSystem, Sharing, Clipboard imports as they are no longer needed here
+
 import { db } from '../../App';
+import Colors from '../constants/Colors';
 
 const GameItem = ({ game }) => {
   // Helper to convert 0/1 to Yes/No, and null to an empty string or 'N/A'
   const formatBoolean = (value) => {
     if (value === 1) return 'Yes';
     if (value === 0) return 'No';
-    return 'Unknown'; // Treat null/undefined/other as empty string (or 'N/A' if preferred)
+    return 'Unknown';
   };
   const formatWinLoss = (value) => (value === 10 ? 'Win' : 'Loss');
+  const winColor = game.game_win === 10 ? Colors.accentGreen : Colors.accentRed;
 
   return (
     <View style={styles.gameItemContainer}>
       <Text style={styles.gameItemTitle}>
-        Game: {game.game_id} 
-        {game.game_date ? <Text> - {game.game_date}</Text> : null}
+        Game: {game.game_id}
+        {game.game_date ? <Text style={styles.gameItemDate}> - {game.game_date}</Text> : null}
       </Text>
-      <Text>Outcome: {formatWinLoss(game.game_win)} | Difficulty: {game.game_difficulty} | Score: {game.game_score}</Text>
+      <Text style={[styles.gameOutcome, { color: winColor }]}>
+        Outcome: {formatWinLoss(game.game_win)}
+      </Text>
+      <Text style={styles.gameSummary}>
+        Difficulty: {game.game_difficulty} | Score: {game.game_score}
+      </Text>
 
       <Text style={styles.scoreDetails}>
-        Invader Cards: {game.game_cards}, Dahan (/spirit): {game.game_dahan}, Blight (/spirit): {game.game_blight}
+        Invader Cards: {game.game_cards}, Dahan (/s): {game.game_dahan}, Blight (/s): {game.game_blight}
       </Text>
 
       {game.spirits && game.spirits.length > 0 && (
@@ -69,13 +77,13 @@ const GameItem = ({ game }) => {
           ))}
         </View>
       )}
-      <Text style={styles.scoreDetails}>
-        {game.game_mobile !== null ? <Text> • Mobile Game: {formatBoolean(game.game_mobile)}</Text> : null}
-        {game.game_island_health !== null ? <Text> • Island Healthy: {formatBoolean(game.game_island_health)}</Text> : null}
-        {game.game_mobile !== null ? <Text> • Terror Level: {game.game_terror_level}</Text> : null}
-      </Text>
-      {game.game_info ? <Text>Notes: {game.game_info}</Text> : null}
-      {game.game_playtest ? <Text>Playtest</Text>: null}
+      <View style={styles.infoChipsContainer}>
+        {game.game_mobile !== null ? <Text style={styles.infoChip}>Mobile Game: {formatBoolean(game.game_mobile)}</Text> : null}
+        {game.game_island_health !== null ? <Text style={styles.infoChip}>Island Healthy: {formatBoolean(game.game_island_health)}</Text> : null}
+        {game.game_mobile !== null ? <Text style={styles.infoChip}>Terror Level: {game.game_terror_level}</Text> : null}
+      </View>
+      {game.game_info ? <Text style={styles.notesText}>Notes: {game.game_info}</Text> : null}
+      {game.game_playtest ? <Text style={styles.playtestText}>Playtest</Text> : null}
     </View>
   );
 };
@@ -83,7 +91,6 @@ const GameItem = ({ game }) => {
 function ViewResultsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [gameData, setGameData] = useState([]);
-  // Removed 'exporting' state
 
   const fetchGameData = useCallback(async () => {
     if (!db) {
@@ -95,10 +102,10 @@ function ViewResultsScreen({ navigation }) {
     try {
       const games = await db.getAllAsync(
         `SELECT
-        game_id, 
-        game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
-        game_info, game_date, game_island_health, game_terror_level, game_mobile, game_playtest
-      FROM games_fact ORDER BY game_id DESC;`
+      game_id,
+      game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
+      game_info, game_date, game_island_health, game_terror_level, game_mobile, game_playtest
+    FROM games_fact ORDER BY game_id DESC;`
       );
 
       const combinedData = [];
@@ -106,34 +113,34 @@ function ViewResultsScreen({ navigation }) {
       for (const game of games) {
         const spirits = await db.getAllAsync(
           `SELECT
-          sd.spirit_name,
-          ad.aspect_name
-        FROM events_fact e
-        LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
-        LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
-        WHERE e.game_id = ? AND e.spirit_id IS NOT NULL
-        GROUP BY sd.spirit_name, ad.aspect_name;`,
+        sd.spirit_name,
+        ad.aspect_name
+      FROM events_fact e
+      LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
+      LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
+      WHERE e.game_id = ? AND e.spirit_id IS NOT NULL
+      GROUP BY sd.spirit_name, ad.aspect_name;`,
           [game.game_id]
         );
 
         const adversaries = await db.getAllAsync(
           `SELECT
-          ad.adversary_name,
-          e.adversary_level
-        FROM events_fact e
-        LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
-        WHERE e.game_id = ? AND e.adversary_id IS NOT NULL
-        GROUP BY ad.adversary_name, e.adversary_level;`,
+        ad.adversary_name,
+        e.adversary_level
+      FROM events_fact e
+      LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
+      WHERE e.game_id = ? AND e.adversary_id IS NOT NULL
+      GROUP BY ad.adversary_name, e.adversary_level;`,
           [game.game_id]
         );
 
         const scenarios = await db.getAllAsync(
           `SELECT
-          sd.scenario_name
-        FROM events_fact e
-        LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
-        WHERE e.game_id = ? AND e.scenario_id IS NOT NULL
-        GROUP BY sd.scenario_name;`,
+        sd.scenario_name
+      FROM events_fact e
+      LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
+      WHERE e.game_id = ? AND e.scenario_id IS NOT NULL
+      GROUP BY sd.scenario_name;`,
           [game.game_id]
         );
 
@@ -160,104 +167,181 @@ function ViewResultsScreen({ navigation }) {
     }, [fetchGameData])
   );
 
-  // Removed generateCombinedGameCSV, exportToCSV, copyCombinedToClipboard
-
   return (
-    <View style={styles.screenContainer}>
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Add New Game"
-          onPress={() => navigation.navigate('AddGameTab')}
-        />
-      </View>
-
-      {gameData.length === 0 ? (
-        <View style={styles.centeredContainer}>
-          <Text style={styles.noDataText}>No games recorded yet. Add a new game!</Text>
-          <Button title="Add First Game" onPress={() => navigation.navigate('AddGameTab')} />
+    <ImageBackground
+      source={require('../../assets/backgrounds/main_bg.png')} // Example background image
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <View style={styles.screenContent}>
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Add New Game"
+            onPress={() => navigation.navigate('AddGameTab')}
+            color={Colors.accentBrown} // Updated button color
+          />
         </View>
-      ) : (
-        <FlatList
-          data={gameData}
-          keyExtractor={(item) => item.game_id.toString()}
-          renderItem={({ item }) => <GameItem game={item} />}
-          contentContainerStyle={styles.listContentContainer}
-        />
-      )}
-    </View>
+
+        {gameData.length === 0 ? (
+          <View style={styles.centeredContainer}>
+            <Text style={styles.noDataText}>No games recorded yet. Add a new game!</Text>
+            <Button title="Add First Game" onPress={() => navigation.navigate('AddGameTab')} color={Colors.accentGreen} />
+          </View>
+        ) : (
+          <FlatList
+            data={gameData}
+            keyExtractor={(item) => item.game_id.toString()}
+            renderItem={({ item }) => <GameItem game={item} />}
+            contentContainerStyle={styles.listContentContainer}
+          />
+        )}
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screenContainer: {
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  screenContent: { // Wrapper to sit on top of ImageBackground
     flex: 1,
     padding: 10,
-    backgroundColor: '#f0f4f7',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Slightly transparent overlay
   },
   centeredContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Semi-transparent card
+    borderRadius: 15,
+    margin: 10,
   },
   buttonContainer: {
-    // Adjusted to center the single button or allow for future additions
     flexDirection: 'row',
-    justifyContent: 'center', // Changed from 'space-around'
+    justifyContent: 'center',
     marginBottom: 20,
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  listContentContainer: {
-    paddingBottom: 20,
-  },
-  gameItemContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)', // Semi-transparent button area
     borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    shadowColor: '#000',
+    marginHorizontal: 5,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 3,
+    elevation: 2,
+  },
+  listContentContainer: {
+    paddingBottom: 20,
+    paddingHorizontal: 5,
+  },
+  gameItemContainer: {
+    backgroundColor: Colors.cardBackground, // Use the card background color
+    borderRadius: 15, // More rounded corners
+    padding: 18, // More padding
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderColorLight, // Softer border
+    shadowColor: "#000", // Stronger shadow for "floating" effect
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
   },
   gameItemTitle: {
+    fontSize: 20, // Slightly larger
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: Colors.primaryText, // Updated color
+    fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif',
+  },
+  gameItemDate: {
+    fontSize: 16,
+    fontWeight: 'normal',
+    color: Colors.secondaryText,
+  },
+  gameOutcome: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 5,
-    color: '#34495e',
+    // Color set dynamically based on win/loss
+  },
+  gameSummary: {
+    fontSize: 15,
+    color: Colors.secondaryText,
+    marginBottom: 10,
   },
   detailSection: {
-    marginTop: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: '#3498db',
-    paddingLeft: 10,
+    marginTop: 10,
+    borderLeftWidth: 4, // Thicker left border
+    borderLeftColor: Colors.accentBrown, // Earthy brown accent
+    paddingLeft: 12, // More padding
+    backgroundColor: 'rgba(0,0,0,0.03)', // Very subtle background for the section
+    borderRadius: 5,
+    paddingVertical: 5,
   },
   detailTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#555',
-    marginBottom: 2,
+    color: Colors.primaryText, // Updated color
+    marginBottom: 4,
   },
   detailText: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.secondaryText, // Updated color
   },
   scoreDetails: {
     fontSize: 13,
-    color: '#777',
+    color: Colors.secondaryText,
     marginTop: 10,
     textAlign: 'center',
+    backgroundColor: 'rgba(0,0,0,0.02)', // Subtle background
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  infoChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  infoChip: {
+    backgroundColor: Colors.secondaryBackground,
+    color: Colors.primaryText,
+    fontSize: 12,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    marginHorizontal: 3,
+    marginVertical: 3,
+    borderWidth: 1,
+    borderColor: Colors.borderColorLight,
+  },
+  notesText: {
+    fontSize: 14,
+    color: Colors.primaryText,
+    marginTop: 10,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    padding: 10,
+    borderRadius: 10,
+  },
+  playtestText: {
+    fontSize: 12,
+    color: Colors.accentBrown,
+    fontWeight: 'bold',
+    textAlign: 'right',
+    marginTop: 5,
   },
   noDataText: {
     fontSize: 18,
-    color: '#888',
+    color: Colors.primaryText,
     textAlign: 'center',
     marginBottom: 20,
+    fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif',
   }
 });
 

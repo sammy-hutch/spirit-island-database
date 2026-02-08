@@ -6,13 +6,17 @@ import {
   StyleSheet,
   ActivityIndicator,
   Button,
-  Alert, // Import Alert for the confirmation dialog
+  Alert,
   ScrollView,
+  ImageBackground, // Added ImageBackground
+  Platform, // Added Platform for font styles
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+
 import { db } from '../../App';
+import Colors from '../constants/Colors';
 import { updateAllMasterData } from '../utils/databaseUtils';
 
 // Helper function to generate CSV string from any array of objects (original)
@@ -77,8 +81,8 @@ const generateCombinedGameCSV = (data) => {
       game.game_id,
       game.game_date,
       game.game_mobile === 1 ? 'Yes' : 'No', // Format boolean
-      game.island_healthy === 1 ? 'Yes' : 'No', // Format boolean
-      game.terror_level,
+      game.game_island_health === 1 ? 'Yes' : 'No', // Format boolean
+      game.game_terror_level,
       game.game_difficulty,
       game.game_win === 10 ? 'Win' : 'Loss', // Format win/loss
       game.game_cards,
@@ -114,44 +118,44 @@ function SettingsScreen() {
     try {
       const games = await db.getAllAsync(
         `SELECT
-        game_id,
-        game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
-        game_info, game_date, game_island_health, game_terror_level, game_mobile
-      FROM games_fact ORDER BY game_id DESC;`
+      game_id,
+      game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
+      game_info, game_date, game_island_health, game_terror_level, game_mobile
+    FROM games_fact ORDER BY game_id DESC;`
       );
 
       const data = [];
       for (const game of games) {
         const spirits = await db.getAllAsync(
           `SELECT
-          sd.spirit_name,
-          ad.aspect_name
-        FROM events_fact e
-        LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
-        LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
-        WHERE e.game_id = ? AND e.spirit_id IS NOT NULL
-        GROUP BY sd.spirit_name, ad.aspect_name;`,
+        sd.spirit_name,
+        ad.aspect_name
+      FROM events_fact e
+      LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
+      LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
+      WHERE e.game_id = ? AND e.spirit_id IS NOT NULL
+      GROUP BY sd.spirit_name, ad.aspect_name;`,
           [game.game_id]
         );
 
         const adversaries = await db.getAllAsync(
           `SELECT
-          ad.adversary_name,
-          e.adversary_level
-        FROM events_fact e
-        LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
-        WHERE e.game_id = ? AND e.adversary_id IS NOT NULL
-        GROUP BY ad.adversary_name, e.adversary_level;`,
+        ad.adversary_name,
+        e.adversary_level
+      FROM events_fact e
+      LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
+      WHERE e.game_id = ? AND e.adversary_id IS NOT NULL
+      GROUP BY ad.adversary_name, e.adversary_level;`,
           [game.game_id]
         );
 
         const scenarios = await db.getAllAsync(
           `SELECT
-          sd.scenario_name
-        FROM events_fact e
-        LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
-        WHERE e.game_id = ? AND e.scenario_id IS NOT NULL
-        GROUP BY sd.scenario_name;`,
+        sd.scenario_name
+      FROM events_fact e
+      LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
+      WHERE e.game_id = ? AND e.scenario_id IS NOT NULL
+      GROUP BY sd.scenario_name;`,
           [game.game_id]
         );
 
@@ -214,11 +218,11 @@ function SettingsScreen() {
     try {
       // Updated query to include all new columns
       const result = await db.getAllAsync(`
-      SELECT 
-        game_id,
-        game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
-        game_info, game_date, game_island_health, game_terror_level, game_mobile
-      FROM games_fact;`);
+    SELECT
+      game_id,
+      game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
+      game_info, game_date, game_island_health, game_terror_level, game_mobile
+    FROM games_fact;`);
       if (result.length === 0) {
         Alert.alert("No Data", "No games found in games_fact to copy.");
         return;
@@ -316,123 +320,159 @@ function SettingsScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Settings & Data Management</Text>
+    <ImageBackground
+      source={require('../../assets/backgrounds/main_bg.png')} // Example background image
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Settings & Data Management</Text>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Master Data Update</Text>
-        <Text style={styles.sectionDescription}>
-          Pull the latest Spirits, Aspects, Adversaries, and Scenarios from your Google Sheets.
-        </Text>
-        <Button
-          title={updatingMasterData ? "Updating..." : "Update All Master Data"}
-          onPress={handleUpdateMasterData} // Calls the new confirmation function
-          disabled={updatingMasterData || copyingRaw || loadingCombinedExportData || exportingCombinedCSV}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Export Game Data</Text>
-        <Text style={styles.sectionDescription}>
-          Export all recorded game results.
-        </Text>
-        <View style={styles.buttonGroup}>
-          <Button
-            title={exportingCombinedCSV ? "Exporting..." : "Export All Games CSV"}
-            onPress={exportCombinedToCSV}
-            disabled={exportingCombinedCSV || loadingCombinedExportData || updatingMasterData || copyingRaw}
-          />
-          <View style={{ height: 10 }} />
-          <Button
-            title={loadingCombinedExportData ? "Loading Data..." : "Copy All Games CSV"}
-            onPress={copyCombinedToClipboard}
-            disabled={loadingCombinedExportData || exportingCombinedCSV || updatingMasterData || copyingRaw}
-          />
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Master Data Update</Text>
+          <Text style={styles.sectionDescription}>
+            Pull the latest Spirits, Aspects, Adversaries, and Scenarios from your Google Sheets.
+          </Text>
+          <View style={styles.buttonWrapper}>
+            <Button
+              title={updatingMasterData ? "Updating..." : "Update All Master Data"}
+              onPress={handleUpdateMasterData}
+              disabled={updatingMasterData || copyingRaw || loadingCombinedExportData || exportingCombinedCSV}
+              color={Colors.accentBrown} // Updated button color
+            />
+          </View>
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Export Raw Table Data</Text>
-        <Text style={styles.sectionDescription}>
-          Copy raw table data (games_fact and events_fact) to your clipboard as CSV.
-        </Text>
-        <View style={styles.buttonGroup}>
-          <Button
-            title={copyingRaw ? "Copying..." : "Copy games_fact CSV"}
-            onPress={copyGamesFactToClipboard}
-            disabled={copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV}
-          />
-          <View style={{ height: 10 }} />
-          <Button
-            title={copyingRaw ? "Copying..." : "Copy events_fact CSV"}
-            onPress={copyEventsFactToClipboard}
-            disabled={copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV}
-          />
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Export Game Data</Text>
+          <Text style={styles.sectionDescription}>
+            Export all recorded game results.
+          </Text>
+          <View style={styles.buttonGroup}>
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={exportingCombinedCSV ? "Exporting..." : "Export All Games CSV"}
+                onPress={exportCombinedToCSV}
+                disabled={exportingCombinedCSV || loadingCombinedExportData || updatingMasterData || copyingRaw}
+                color={Colors.accentGreen} // Updated button color
+              />
+            </View>
+            <View style={{ height: 10 }} />
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={loadingCombinedExportData ? "Loading Data..." : "Copy All Games CSV"}
+                onPress={copyCombinedToClipboard}
+                disabled={loadingCombinedExportData || exportingCombinedCSV || updatingMasterData || copyingRaw}
+                color={Colors.accentGreen} // Updated button color
+              />
+            </View>
+          </View>
         </View>
-      </View>
 
-      {(copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV) && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text style={styles.overlayText}>Processing...</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Export Raw Table Data</Text>
+          <Text style={styles.sectionDescription}>
+            Copy raw table data (games_fact and events_fact) to your clipboard as CSV.
+          </Text>
+          <View style={styles.buttonGroup}>
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={copyingRaw ? "Copying..." : "Copy games_fact CSV"}
+                onPress={copyGamesFactToClipboard}
+                disabled={copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV}
+                color={Colors.borderColorDark} // Updated button color
+              />
+            </View>
+            <View style={{ height: 10 }} />
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={copyingRaw ? "Copying..." : "Copy events_fact CSV"}
+                onPress={copyEventsFactToClipboard}
+                disabled={copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV}
+                color={Colors.borderColorDark} // Updated button color
+              />
+            </View>
+          </View>
         </View>
-      )}
-    </ScrollView>
+
+        {(copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV) && (
+          <View style={styles.overlay}>
+            <ActivityIndicator size="large" color={Colors.accentBrown} />
+            <Text style={styles.overlayText}>Processing...</Text>
+          </View>
+        )}
+      </ScrollView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   container: {
     flexGrow: 1,
     padding: 20,
-    backgroundColor: '#f0f4f7',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // Semi-transparent card-like background
+    borderRadius: 15,
+    margin: 10,
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',
-    color: '#2c3e50',
+    color: Colors.primaryText, // Updated color
+    fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif',
   },
   section: {
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    padding: 15,
+    backgroundColor: Colors.cardBackground, // Card background
+    borderRadius: 15, // Softer edges
+    padding: 18, // More padding
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 3,
+    borderColor: Colors.borderColorLight, // Soft border
+    shadowColor: "#000", // Stronger shadow for "floating" effect
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#34495e',
+    color: Colors.primaryText, // Updated color
+    fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif',
   },
   sectionDescription: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.secondaryText, // Updated color
     marginBottom: 15,
   },
   buttonGroup: {
     flexDirection: 'column',
     marginTop: 10,
   },
+  buttonWrapper: { // Added wrapper for consistent button styling
+    borderRadius: 10,
+    overflow: 'hidden', // Clips the native button background to the border radius
+    marginVertical: 5, // Spacing between buttons
+  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)', // Lighter overlay
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+    borderRadius: 15, // Match container border radius
   },
   overlayText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#333',
+    color: Colors.primaryText, // Updated color
   }
 });
 

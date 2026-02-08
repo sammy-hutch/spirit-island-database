@@ -12,12 +12,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  ImageBackground, // Added ImageBackground
 } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker'; // Import DateTimePicker
 
 import { db } from '../../App';
+import Colors from '../constants/Colors';
 
 const SpiritEntry = ({
   index,
@@ -58,7 +60,7 @@ const SpiritEntry = ({
         <Button
           title="Remove Spirit"
           onPress={() => onRemove(index)}
-          color="#FF6347"
+          color={Colors.accentRed} // Updated button color
         />
       )}
     </View>
@@ -106,7 +108,7 @@ const AdversaryEntry = ({
         <Button
           title="Remove Adversary"
           onPress={() => onRemove(index)}
-          color="#FF6347"
+          color={Colors.accentRed} // Updated button color
         />
       )}
     </View>
@@ -135,7 +137,7 @@ const ScenarioEntry = ({
         <Button
           title="Remove Scenario"
           onPress={() => onRemove(index)}
-          color="#FF6347"
+          color={Colors.accentRed} // Updated button color
         />
       )}
     </View>
@@ -428,9 +430,9 @@ function AddGameScreen({ navigation }) {
 
       const gameInsertResult = await db.runAsync(
         `INSERT INTO games_fact (
-          game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
-          game_info, game_date, game_island_health, game_terror_level, game_mobile, game_playtest
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
+        game_info, game_date, game_island_health, game_terror_level, game_mobile, game_playtest
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
           parseInt(formData.difficulty || 0),
           game_score,
@@ -503,8 +505,8 @@ function AddGameScreen({ navigation }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Loading game options...</Text>
+        <ActivityIndicator size="large" color={Colors.accentGreen} />
+        <Text style={{ color: Colors.primaryText }}>Loading game options...</Text>
       </View>
     );
   }
@@ -519,294 +521,354 @@ function AddGameScreen({ navigation }) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Record New Game</Text>
+      {/* Optional: Add ImageBackground here for specific screen background */}
+      {/* IMPORTANT: Replace './assets/backgrounds/add_game_bg.png' with your actual image path */}
+      {/* Or remove ImageBackground and set backgroundColor on the ScrollView */}
+      <ImageBackground
+        source={require('../../assets/backgrounds/main_bg.png')} // Example background image
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>Record New Game</Text>
 
-        {/* Date Played */}
-        <Text style={styles.label}>Date Played:</Text>
-        <Button onPress={showDatepicker} title="Select Date" />
-        <TextInput
-          style={styles.input}
-          value={formData.gameDate.toLocaleDateString()}
-          editable={false}
-          pointerEvents="none"
-        />
-        {showDatePicker && (
-          <DateTimePicker
-            testID="dateTimePicker"
-            value={formData.gameDate}
-            mode="date"
-            is24Hour={true}
-            display="default"
-            onChange={onChangeDate}
+          {/* Date Played */}
+          <Text style={styles.label}>Date Played:</Text>
+          <Button onPress={showDatepicker} title="Select Date" color={Colors.accentBrown} />
+          <TextInput
+            style={styles.input}
+            value={formData.gameDate.toLocaleDateString()}
+            editable={false}
+            pointerEvents="none"
           />
+          {showDatePicker && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={formData.gameDate}
+              mode="date"
+              is24Hour={true}
+              display="default"
+              onChange={onChangeDate}
+            />
+          )}
+
+          {/* Game Score Data */}
+          <Text style={styles.sectionTitle}>Game Score Data:</Text>
+
+          <Text style={styles.label}>Difficulty:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={String(formData.difficulty)}
+            onChangeText={(text) => handleFormChange('difficulty', text)}
+            placeholder="e.g., 5"
+            placeholderTextColor={Colors.secondaryText}
+          />
+
+          <Text style={styles.label}>Win/Loss:</Text>
+          <RNPickerSelect
+            onValueChange={(value) => handleFormChange('winLoss', value)}
+            items={[
+              { label: 'Win', value: 'Win' },
+              { label: 'Loss', value: 'Loss' },
+            ]}
+            value={formData.winLoss}
+            placeholder={{ label: 'Select Win/Loss...', value: null }}
+            style={pickerSelectStyles}
+          />
+
+          <Text style={styles.label}>Invader Cards:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={String(formData.invaderCards)}
+            onChangeText={(text) => handleFormChange('invaderCards', text)}
+            placeholder="e.g., 2"
+            placeholderTextColor={Colors.secondaryText}
+          />
+
+          <Text style={styles.label}>Dahan on Island (per Spirit):</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={String(formData.dahanPerSpirit)}
+            onChangeText={(text) => handleFormChange('dahanPerSpirit', text)}
+            placeholder="e.g., 5"
+            placeholderTextColor={Colors.secondaryText}
+          />
+
+          <Text style={styles.label}>Blight on Island (per Spirit):</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={String(formData.blightPerSpirit)}
+            onChangeText={(text) => handleFormChange('blightPerSpirit', text)}
+            placeholder="e.g., 0"
+            placeholderTextColor={Colors.secondaryText}
+          />
+
+          <Text style={styles.totalScore}>Calculated Total Score: {totalScore()}</Text>
+
+          {/* Spirits Section */}
+          <Text style={styles.sectionTitle}>Spirits Played ({formData.spirits.length} selected):</Text>
+          {formData.spirits.map((spiritEntry, index) => (
+            <SpiritEntry
+              key={index}
+              index={index}
+              spiritOptions={masterData.spiritOptions}
+              allAspectsMap={masterData.allAspectsMap}
+              selectedSpirit={spiritEntry.name}
+              selectedAspect={spiritEntry.aspect}
+              onSpiritChange={handleSpiritChange}
+              onAspectChange={handleAspectChange}
+              onRemove={removeSpiritEntry}
+              canRemove={formData.spirits.length > 1}
+            />
+          ))}
+          {formData.spirits.length < 6 && (
+            <Button title="Add Another Spirit" onPress={addSpiritEntry} color={Colors.accentGreen} />
         )}
 
-        {/* Game Score Data */}
-        <Text style={styles.sectionTitle}>Game Score Data:</Text>
-
-        <Text style={styles.label}>Difficulty:</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={String(formData.difficulty)}
-          onChangeText={(text) => handleFormChange('difficulty', text)}
-          placeholder="e.g., 5"
-        />
-
-        <Text style={styles.label}>Win/Loss:</Text>
-        <RNPickerSelect
-          onValueChange={(value) => handleFormChange('winLoss', value)}
-          items={[
-            { label: 'Win', value: 'Win' },
-            { label: 'Loss', value: 'Loss' },
-          ]}
-          value={formData.winLoss}
-          placeholder={{ label: 'Select Win/Loss...', value: null }}
-          style={pickerSelectStyles}
-        />
-
-        <Text style={styles.label}>Invader Cards:</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={String(formData.invaderCards)}
-          onChangeText={(text) => handleFormChange('invaderCards', text)}
-          placeholder="e.g., 2"
-        />
-
-        <Text style={styles.label}>Dahan on Island (per Spirit):</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={String(formData.dahanPerSpirit)}
-          onChangeText={(text) => handleFormChange('dahanPerSpirit', text)}
-          placeholder="e.g., 5"
-        />
-
-        <Text style={styles.label}>Blight on Island (per Spirit):</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={String(formData.blightPerSpirit)}
-          onChangeText={(text) => handleFormChange('blightPerSpirit', text)}
-          placeholder="e.g., 0"
-        />
-
-        <Text style={styles.totalScore}>Calculated Total Score: {totalScore()}</Text>
-
-        {/* Spirits Section */}
-        <Text style={styles.sectionTitle}>Spirits Played ({formData.spirits.length} selected):</Text>
-        {formData.spirits.map((spiritEntry, index) => (
-          <SpiritEntry
-            key={index}
-            index={index}
-            spiritOptions={masterData.spiritOptions}
-            allAspectsMap={masterData.allAspectsMap}
-            selectedSpirit={spiritEntry.name}
-            selectedAspect={spiritEntry.aspect}
-            onSpiritChange={handleSpiritChange}
-            onAspectChange={handleAspectChange}
-            onRemove={removeSpiritEntry}
-            canRemove={formData.spirits.length > 1}
-          />
-        ))}
-        {formData.spirits.length < 6 && (
-          <Button title="Add Another Spirit" onPress={addSpiritEntry} />
+          {/* Adversaries Section */}
+          <Text style={styles.sectionTitle}>Adversaries ({formData.adversaries.length} selected):</Text>
+          {formData.adversaries.map((adversaryEntry, index) => (
+            <AdversaryEntry
+              key={index}
+              index={index}
+              adversaryOptions={masterData.adversaryOptions}
+              selectedAdversary={adversaryEntry.name}
+              selectedLevel={adversaryEntry.level}
+              onAdversaryChange={handleAdversaryChange}
+              onLevelChange={handleAdversaryLevelChange}
+              onRemove={removeAdversaryEntry}
+              canRemove={formData.adversaries.length > 0}
+            />
+          ))}
+          {formData.adversaries.length < 2 && (
+            <Button title="Add Adversary" onPress={addAdversaryEntry} color={Colors.accentGreen} />
         )}
 
-        {/* Adversaries Section */}
-        <Text style={styles.sectionTitle}>Adversaries ({formData.adversaries.length} selected):</Text>
-        {formData.adversaries.map((adversaryEntry, index) => (
-          <AdversaryEntry
-            key={index}
-            index={index}
-            adversaryOptions={masterData.adversaryOptions}
-            selectedAdversary={adversaryEntry.name}
-            selectedLevel={adversaryEntry.level}
-            onAdversaryChange={handleAdversaryChange}
-            onLevelChange={handleAdversaryLevelChange}
-            onRemove={removeAdversaryEntry}
-            canRemove={formData.adversaries.length > 0}
-          />
-        ))}
-        {formData.adversaries.length < 2 && (
-          <Button title="Add Adversary" onPress={addAdversaryEntry} />
+          {/* Scenarios Section */}
+          <Text style={styles.sectionTitle}>Scenarios ({formData.scenarios.length} selected):</Text>
+          {formData.scenarios.map((scenarioName, index) => (
+            <ScenarioEntry
+              key={index}
+              index={index}
+              scenarioOptions={masterData.scenarioOptions}
+              selectedScenario={scenarioName.name}
+              onScenarioChange={handleScenarioChange}
+              onRemove={removeScenarioEntry}
+              canRemove={formData.scenarios.length > 0}
+            />
+          ))}
+          {formData.scenarios.length < 2 && (
+            <Button title="Add Scenario" onPress={addScenarioEntry} color={Colors.accentGreen} />
         )}
 
-        {/* Scenarios Section */}
-        <Text style={styles.sectionTitle}>Scenarios ({formData.scenarios.length} selected):</Text>
-        {formData.scenarios.map((scenarioName, index) => (
-          <ScenarioEntry
-            key={index}
-            index={index}
-            scenarioOptions={masterData.scenarioOptions}
-            selectedScenario={scenarioName.name}
-            onScenarioChange={handleScenarioChange}
-            onRemove={removeScenarioEntry}
-            canRemove={formData.scenarios.length > 0}
+          {/* NEW SECTION TITLE ADDED HERE FOR SPACING */}
+          <Text style={styles.sectionTitle}>Game Details:</Text>
+
+          {/* Mobile Game Flag */}
+          <View style={styles.row}>
+            <Text style={styles.label}>Played on Mobile:</Text>
+            <Switch
+              value={formData.mobileGame}
+              onValueChange={(value) => handleFormChange('mobileGame', value)}
+              trackColor={{ false: Colors.borderColorLight, true: Colors.accentGreen }} // Organic switch colors
+              thumbColor={formData.mobileGame ? Colors.cardBackground : Colors.cardBackground}
+            />
+          </View>
+
+          {/* Playtest Flag */}
+          <View style={styles.row}>
+            <Text style={styles.label}>Playtest:</Text>
+            <Switch
+              value={formData.playtest}
+              onValueChange={(value) => handleFormChange('playtest', value)}
+              trackColor={{ false: Colors.borderColorLight, true: Colors.accentGreen }}
+              thumbColor={formData.playtest ? Colors.cardBackground : Colors.cardBackground}
+            />
+          </View>
+
+          {/* Island Healthy Toggle */}
+          <View style={styles.row}>
+            <Text style={styles.label}>Island Healthy:</Text>
+            <Switch
+              value={formData.islandHealthy}
+              onValueChange={(value) => handleFormChange('islandHealthy', value)}
+              trackColor={{ false: Colors.accentRed, true: Colors.accentGreen }} // Red for unhealthy, green for healthy
+              thumbColor={formData.islandHealthy ? Colors.cardBackground : Colors.cardBackground}
+            />
+          </View>
+
+          {/* Terror Level Picker */}
+          <Text style={styles.label}>Terror Level:</Text>
+          <RNPickerSelect
+            onValueChange={(value) => handleFormChange('terrorLevel', value)}
+            items={terrorLevelOptions}
+            value={formData.terrorLevel}
+            placeholder={{ label: 'Select Terror Level...', value: null }}
+            style={pickerSelectStyles}
           />
-        ))}
-        {formData.scenarios.length < 2 && (
-          <Button title="Add Scenario" onPress={addScenarioEntry} />
-        )}
 
-        {/* NEW SECTION TITLE ADDED HERE FOR SPACING */}
-        <Text style={styles.sectionTitle}>Game Details:</Text>
-
-        {/* Mobile Game Flag */}
-        <View style={styles.row}>
-          <Text style={styles.label}>Played on Mobile:</Text>
-          <Switch
-            value={formData.mobileGame}
-            onValueChange={(value) => handleFormChange('mobileGame', value)}
+          {/* Notes */}
+          <Text style={styles.label}>Notes:</Text>
+          <TextInput
+            style={styles.textArea}
+            multiline
+            numberOfLines={4}
+            value={formData.notes}
+            onChangeText={(text) => handleFormChange('notes', text)}
+            placeholder="Any additional notes about the game..."
+            placeholderTextColor={Colors.secondaryText}
           />
-        </View>
 
-        {/* Playtest Flag */}
-        <View style={styles.row}>
-          <Text style={styles.label}>Playtest:</Text>
-          <Switch
-            value={formData.playtest}
-            onValueChange={(value) => handleFormChange('playtest', value)}
-          />
-        </View>
-
-        {/* Island Healthy Toggle */}
-        <View style={styles.row}>
-          <Text style={styles.label}>Island Healthy:</Text>
-          <Switch
-            value={formData.islandHealthy}
-            onValueChange={(value) => handleFormChange('islandHealthy', value)}
-          />
-        </View>
-
-        {/* Terror Level Picker */}
-        <Text style={styles.label}>Terror Level:</Text>
-        <RNPickerSelect
-          onValueChange={(value) => handleFormChange('terrorLevel', value)}
-          items={terrorLevelOptions}
-          value={formData.terrorLevel}
-          placeholder={{ label: 'Select Terror Level...', value: null }}
-          style={pickerSelectStyles}
-        />
-
-        {/* Notes */}
-        <Text style={styles.label}>Notes:</Text>
-        <TextInput
-          style={styles.textArea}
-          multiline
-          numberOfLines={4}
-          value={formData.notes}
-          onChangeText={(text) => handleFormChange('notes', text)}
-          placeholder="Any additional notes about the game..."
-        />
-
-        <View style={styles.saveButtonContainer}>
-          <Button title="Save Game Results" onPress={handleSaveGame} />
-        </View>
-      </ScrollView>
+          <View style={styles.saveButtonContainer}>
+            <Button title="Save Game Results" onPress={handleSaveGame} color={Colors.accentBrown} />
+          </View>
+        </ScrollView>
+      </ImageBackground>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: { // Style for ImageBackground
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   container: {
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // Semi-transparent card-like background
+    borderRadius: 15, // Softer edges for the main content area
+    margin: 10, // Add some margin from the edges of the ImageBackground
     paddingBottom: 50,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.primaryBackground,
   },
   title: {
-    fontSize: 26,
+    fontSize: 28, // Slightly larger
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-    color: '#333',
+    color: Colors.primaryText, // Updated color
+    fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif', // Example: more organic font
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22, // Slightly larger
     fontWeight: '600',
     marginTop: 25,
     marginBottom: 15,
-    color: '#444',
+    color: Colors.secondaryText, // Updated color
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    paddingBottom: 5,
+    borderBottomColor: Colors.borderColorLight, // Softer border
+    paddingBottom: 8, // More padding
+    fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 15,
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: Colors.cardBackground, // Card background
+    padding: 12, // Increased padding
+    borderRadius: 10, // Softer edges
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: Colors.borderColorLight, // Soft border
+    shadowColor: "#000", // Subtle shadow for depth
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 3.84,
+    elevation: 3,
   },
   label: {
     fontSize: 16,
-    marginBottom: 8,
+    marginBottom: 5, // Reduced for tighter packing
     fontWeight: '500',
-    color: '#555',
+    color: Colors.primaryText, // Updated color
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
+    borderColor: Colors.borderColorMedium, // Softer border color
+    borderRadius: 10, // Softer edges
+    padding: 12, // Increased padding
     marginBottom: 15,
     fontSize: 16,
-    backgroundColor: '#fff',
-    color: '#333',
+    backgroundColor: Colors.cardBackground, // Card background
+    color: Colors.primaryText, // Updated color
+    shadowColor: "#000", // Subtle shadow
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 1.41,
+    elevation: 2,
   },
   textArea: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
+    borderColor: Colors.borderColorMedium, // Softer border color
+    borderRadius: 10, // Softer edges
+    padding: 12, // Increased padding
     marginBottom: 15,
     fontSize: 16,
-    minHeight: 100,
+    minHeight: 120, // Taller text area
     textAlignVertical: 'top',
-    backgroundColor: '#fff',
-    color: '#333',
-  },
-  totalScore: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#006600',
-  },
-  entryContainer: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
+    backgroundColor: Colors.cardBackground, // Card background
+    color: Colors.primaryText, // Updated color
+    shadowColor: "#000", // Subtle shadow
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
     shadowRadius: 1.41,
     elevation: 2,
+  },
+  totalScore: {
+    fontSize: 20, // Slightly larger
+    fontWeight: 'bold',
+    marginTop: 15,
+    marginBottom: 25,
+    textAlign: 'center',
+    color: Colors.accentGreen, // Updated color
+    fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif',
+  },
+  entryContainer: {
+    backgroundColor: Colors.cardBackground, // Card background
+    padding: 15,
+    borderRadius: 10, // Softer edges
+    borderWidth: 1,
+    borderColor: Colors.borderColorLight, // Soft border
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 3.84,
+    elevation: 3,
   },
   entryLabel: {
     fontSize: 15,
     marginBottom: 5,
     fontWeight: '500',
-    color: '#666',
+    color: Colors.primaryText, // Updated color
   },
   saveButtonContainer: {
     marginTop: 30,
     marginBottom: 20,
+    borderRadius: 10, // Apply border radius to the container to affect Button visual (Android only, iOS buttons are more transparent)
+    overflow: 'hidden', // Clip content to border radius for Android
   }
 });
 
@@ -817,27 +879,43 @@ const pickerSelectStyles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    color: 'black',
+    borderColor: Colors.borderColorMedium, // Softer border
+    borderRadius: 10, // Softer edges
+    color: Colors.primaryText, // Updated color
     paddingRight: 30,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.cardBackground, // Card background
     marginBottom: 15,
+    shadowColor: "#000", // Subtle shadow
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 1.41,
+    elevation: 2,
   },
   inputAndroid: {
     fontSize: 16,
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    color: 'black',
+    borderColor: Colors.borderColorMedium, // Softer border
+    borderRadius: 10, // Softer edges
+    color: Colors.primaryText, // Updated color
     paddingRight: 30,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.cardBackground, // Card background
     marginBottom: 15,
+    shadowColor: "#000", // Subtle shadow
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 1.41,
+    elevation: 2,
   },
   placeholder: {
-    color: '#999',
+    color: Colors.secondaryText, // Updated color
   },
 });
 

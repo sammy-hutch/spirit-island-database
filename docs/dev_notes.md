@@ -23,8 +23,8 @@ General TODO:
 
 App TODO:
 - app logo
-- improve appearance
-- on viewresults screen, green boxes for won games, red for losses
+- different backgrounds for each page
+- different backgrounds for win vs loss, blight vs healthy games
 - tidy up code comments
 
 Accolades TODO

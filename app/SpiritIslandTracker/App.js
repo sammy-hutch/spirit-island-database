@@ -1,6 +1,6 @@
 // App.js
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, ActivityIndicator } from "react-native";
+import { StyleSheet, Text, View, ActivityIndicator, ImageBackground } from "react-native"; // Added ImageBackground
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
@@ -18,6 +18,9 @@ import SettingsScreen from "./src/screens/SettingsScreen";
 // Import the new utility for master data update
 import { updateAllMasterData } from "./src/utils/databaseUtils";
 
+// Import Colors from its dedicated file
+import Colors from './src/constants/Colors'; // <--- UPDATED IMPORT
+
 const Tab = createBottomTabNavigator();
 
 // Declare db globally but assign it after opening async
@@ -32,55 +35,55 @@ const initializeDatabase = async () => {
 
     const tableCreations = [
       `CREATE TABLE IF NOT EXISTS games_fact (
-       game_id INTEGER PRIMARY KEY AUTOINCREMENT,
-       game_difficulty INTEGER,
-       game_win INTEGER,
-       game_cards INTEGER,
-       game_dahan INTEGER,
-       game_blight INTEGER,
-       game_score INTEGER,
-       game_info TEXT,
-       game_date TEXT,
-       game_island_health INTEGER,
-       game_terror_level INTEGER,
-       game_mobile INTEGER,
-       game_playtest INTEGER
-     );`,
+     game_id INTEGER PRIMARY KEY AUTOINCREMENT,
+     game_difficulty INTEGER,
+     game_win INTEGER,
+     game_cards INTEGER,
+     game_dahan INTEGER,
+     game_blight INTEGER,
+     game_score INTEGER,
+     game_info TEXT,
+     game_date TEXT,
+     game_island_health INTEGER,
+     game_terror_level INTEGER,
+     game_mobile INTEGER,
+     game_playtest INTEGER
+   );`,
       `CREATE TABLE IF NOT EXISTS events_fact (
-       event_id INTEGER PRIMARY KEY AUTOINCREMENT,
-       game_id INTEGER NOT NULL,
-       spirit_id INTEGER NOT NULL,
-       aspect_id INTEGER,
-       adversary_id INTEGER,
-       adversary_level INTEGER,
-       scenario_id INTEGER,
-       FOREIGN KEY (game_id) REFERENCES games_fact(game_id) ON DELETE CASCADE
-     );`,
+     event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+     game_id INTEGER NOT NULL,
+     spirit_id INTEGER NOT NULL,
+     aspect_id INTEGER,
+     adversary_id INTEGER,
+     adversary_level INTEGER,
+     scenario_id INTEGER,
+     FOREIGN KEY (game_id) REFERENCES games_fact(game_id) ON DELETE CASCADE
+   );`,
       `CREATE TABLE IF NOT EXISTS spirits_dim (
-       spirit_id INTEGER PRIMARY KEY AUTOINCREMENT,
-       spirit_name TEXT NOT NULL UNIQUE,
-       complexity TEXT,
-       spirit_image TEXT,
-       nemesis_name TEXT
-     );`,
+     spirit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+     spirit_name TEXT NOT NULL UNIQUE,
+     complexity TEXT,
+     spirit_image TEXT,
+     nemesis_name TEXT
+   );`,
       `CREATE TABLE IF NOT EXISTS aspects_dim (
-       aspect_id INTEGER PRIMARY KEY AUTOINCREMENT,
-       aspect_name TEXT NOT NULL UNIQUE,
-       spirit_id INTEGER,
-       aspect_image TEXT
-     );`,
+     aspect_id INTEGER PRIMARY KEY AUTOINCREMENT,
+     aspect_name TEXT NOT NULL UNIQUE,
+     spirit_id INTEGER,
+     aspect_image TEXT
+   );`,
       `CREATE TABLE IF NOT EXISTS adversaries_dim (
-       adversary_id INTEGER PRIMARY KEY AUTOINCREMENT,
-       adversary_name TEXT NOT NULL UNIQUE,
-       adversary_image TEXT,
-       nemesis_name TEXT
-     );`,
+     adversary_id INTEGER PRIMARY KEY AUTOINCREMENT,
+     adversary_name TEXT NOT NULL UNIQUE,
+     adversary_image TEXT,
+     nemesis_name TEXT
+   );`,
       `CREATE TABLE IF NOT EXISTS scenarios_dim (
-       scenario_id INTEGER PRIMARY KEY AUTOINCREMENT,
-       scenario_name TEXT NOT NULL UNIQUE,
-       scenario_difficulty INTEGER,
-       scenario_image TEXT
-     );`,
+     scenario_id INTEGER PRIMARY KEY AUTOINCREMENT,
+     scenario_name TEXT NOT NULL UNIQUE,
+     scenario_difficulty INTEGER,
+     scenario_image TEXT
+   );`,
     ];
 
     for (const statement of tableCreations) {
@@ -135,68 +138,83 @@ function AppContent() {
   if (!dbInitialized) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{loadingMessage}</Text>
+        <ActivityIndicator size="large" color={Colors.accentGreen} />
+        <Text style={{ color: Colors.primaryText }}>{loadingMessage}</Text>
       </View>
     );
   }
 
   return (
-    <NavigationContainer>
-      <Tab.Navigator
-        initialRouteName="AddGameTab"
-        screenOptions={({ route }) => ({
-          headerShown: true,
-          headerTitle: "Spirit Island Game Tracker",
-          headerTitleStyle: {
-            fontWeight: "bold",
-            fontSize: 20,
-            color: "#333",
-          },
-          headerTitleAlign: 'center',
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName;
-            if (route.name === "AddGameTab") {
-              iconName = focused ? "📝" : "🗒️";
-            } else if (route.name === "ViewResultsTab") {
-              iconName = focused ? "📊" : "📈";
-            } else if (route.name === "SettingsTab") {
-              iconName = focused ? "⚙️" : "🔧";
-            }
-            return <Text style={{ color, fontSize: size }}>{iconName}</Text>;
-          },
-          tabBarActiveTintColor: "tomato",
-          tabBarInactiveTintColor: "gray",
-          tabBarStyle: {
-            height: 60 + insets.bottom,
-            paddingBottom: insets.bottom,
-          },
-          tabBarLabelStyle: { fontSize: 12 },
-        })}
-      >
-        <Tab.Screen
-          name="AddGameTab"
-          component={AddGameScreen}
-          options={{
-            tabBarLabel: "Record Game",
-          }}
-        />
-        <Tab.Screen
-          name="ViewResultsTab"
-          component={ViewResultsScreen}
-          options={{
-            tabBarLabel: "View Results",
-          }}
-        />
-        <Tab.Screen
-          name="SettingsTab"
-          component={SettingsScreen}
-          options={{
-            tabBarLabel: "Settings",
-          }}
-        />
-      </Tab.Navigator>
-    </NavigationContainer>
+    // Wrapped NavigationContainer in ImageBackground
+    // IMPORTANT: Replace './assets/backgrounds/main_bg.png' with your actual image path
+    // If you don't have a background image, you can remove ImageBackground and set backgroundColor in styles.container
+    <ImageBackground
+      source={require('./assets/backgrounds/main_bg.png')} // Example background image
+      style={styles.backgroundImage}
+      resizeMode="cover" // or 'repeat', 'stretch'
+    >
+      <NavigationContainer>
+        <Tab.Navigator
+          initialRouteName="AddGameTab"
+          screenOptions={({ route }) => ({
+            headerShown: true,
+            headerTitle: "Spirit Island Game Tracker",
+            headerTitleStyle: {
+              fontWeight: "bold",
+              fontSize: 20,
+              color: Colors.headerTitle, // Updated color
+            },
+            headerStyle: {
+              backgroundColor: Colors.headerBackground, // Updated header background
+            },
+            headerTitleAlign: 'center',
+            tabBarIcon: ({ focused, color, size }) => {
+              let iconName;
+              if (route.name === "AddGameTab") {
+                iconName = focused ? "🌱" : "🌿"; // Organic symbols
+              } else if (route.name === "ViewResultsTab") {
+                iconName = focused ? "🏞️" : "🌲"; // Organic symbols
+              } else if (route.name === "SettingsTab") {
+                iconName = focused ? "⚙️" : "⚙️"; // Settings gear, kept as is but will inherit color
+              }
+              return <Text style={{ color, fontSize: size + 2 }}>{iconName}</Text>; // Slightly larger for emojis
+            },
+            tabBarActiveTintColor: Colors.activeTintColor, // Updated color
+            tabBarInactiveTintColor: Colors.inactiveTintColor, // Updated color
+            tabBarStyle: {
+              height: 60 + insets.bottom,
+              paddingBottom: insets.bottom,
+              backgroundColor: Colors.secondaryBackground, // Earthy background for tab bar
+              borderTopWidth: 1,
+              borderTopColor: Colors.borderColorLight, // Soft border
+            },
+            tabBarLabelStyle: { fontSize: 12, fontWeight: '500' }, // Added weight
+          })}
+        >
+          <Tab.Screen
+            name="AddGameTab"
+            component={AddGameScreen}
+            options={{
+              tabBarLabel: "Record Game",
+            }}
+          />
+          <Tab.Screen
+            name="ViewResultsTab"
+            component={ViewResultsScreen}
+            options={{
+              tabBarLabel: "View Results",
+            }}
+          />
+          <Tab.Screen
+            name="SettingsTab"
+            component={SettingsScreen}
+            options={{
+              tabBarLabel: "Settings",
+            }}
+          />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </ImageBackground>
   );
 }
 
@@ -209,9 +227,15 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: { // New style for ImageBackground
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  // container is no longer directly styling the main background due to ImageBackground
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: 'transparent', // Make sure it's transparent if using ImageBackground
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
@@ -220,24 +244,26 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: Colors.primaryBackground, // Updated background
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#ffdddd",
+    backgroundColor: Colors.accentRed, // Updated background for error
     padding: 20,
   },
   errorText: {
-    color: "#cc0000",
+    color: Colors.cardBackground, // Light text on dark error background
     fontSize: 18,
     textAlign: "center",
   },
-  title: {
+  title: { // This style is for the loading screen title, not the header title
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
+    color: Colors.primaryText, // Updated color
   },
 });
 
-export { db };
+export { db, Colors }; // Export Colors for use in other screens
