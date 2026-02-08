@@ -19,14 +19,21 @@ const GameItem = ({ game }) => {
   const formatBoolean = (value) => {
     if (value === 1) return 'Yes';
     if (value === 0) return 'No';
-    return ''; // Treat null/undefined/other as empty string (or 'N/A' if preferred)
+    return 'Unknown'; // Treat null/undefined/other as empty string (or 'N/A' if preferred)
   };
   const formatWinLoss = (value) => (value === 10 ? 'Win' : 'Loss');
 
   return (
     <View style={styles.gameItemContainer}>
-      <Text style={styles.gameItemTitle}>Game: {game.game_id} - {game.game_date}</Text>
+      <Text style={styles.gameItemTitle}>
+        Game: {game.game_id} 
+        {game.game_date ? <Text> - {game.game_date}</Text> : null}
+      </Text>
       <Text>Outcome: {formatWinLoss(game.game_win)} | Difficulty: {game.game_difficulty} | Score: {game.game_score}</Text>
+
+      <Text style={styles.scoreDetails}>
+        Invader Cards: {game.game_cards}, Dahan (/spirit): {game.game_dahan}, Blight (/spirit): {game.game_blight}
+      </Text>
 
       {game.spirits && game.spirits.length > 0 && (
         <View style={styles.detailSection}>
@@ -62,17 +69,13 @@ const GameItem = ({ game }) => {
           ))}
         </View>
       )}
-
       <Text style={styles.scoreDetails}>
-        Invader Cards: {game.game_cards}, Dahan (/spirit): {game.game_dahan}, Blight (/spirit): {game.game_blight}
-      </Text>
-      <Text style={styles.scoreDetails}>
-        Mobile Game: {formatBoolean(game.game_mobile)} |
-        Island Healthy: {formatBoolean(game.game_island_health)} |
-        Terror Level: {game.game_terror_level !== null ? game.game_terror_level : ''} | {/* Also handle terror_level if it's null */}
-        Playtest: {formatBoolean(game.game_playtest)}
+        {game.game_mobile !== null ? <Text> • Mobile Game: {formatBoolean(game.game_mobile)}</Text> : null}
+        {game.game_island_health !== null ? <Text> • Island Healthy: {formatBoolean(game.game_island_health)}</Text> : null}
+        {game.game_mobile !== null ? <Text> • Terror Level: {game.game_terror_level}</Text> : null}
       </Text>
       {game.game_info ? <Text>Notes: {game.game_info}</Text> : null}
+      {game.game_playtest ? <Text>Playtest</Text>: null}
     </View>
   );
 };
@@ -248,7 +251,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#777',
     marginTop: 10,
-    textAlign: 'right',
+    textAlign: 'center',
   },
   noDataText: {
     fontSize: 18,
