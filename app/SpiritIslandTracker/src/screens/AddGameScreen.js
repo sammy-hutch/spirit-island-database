@@ -12,11 +12,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  ImageBackground, // Added ImageBackground
+  ImageBackground,
 } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import { useFocusEffect } from '@react-navigation/native';
-import DateTimePicker from '@react-native-community/datetimepicker'; // Import DateTimePicker
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { db } from '../../App';
 import Colors from '../constants/Colors';
@@ -60,7 +60,7 @@ const SpiritEntry = ({
         <Button
           title="Remove Spirit"
           onPress={() => onRemove(index)}
-          color={Colors.accentRed} // Updated button color
+          color={Colors.accentRed}
         />
       )}
     </View>
@@ -108,7 +108,7 @@ const AdversaryEntry = ({
         <Button
           title="Remove Adversary"
           onPress={() => onRemove(index)}
-          color={Colors.accentRed} // Updated button color
+          color={Colors.accentRed}
         />
       )}
     </View>
@@ -137,7 +137,7 @@ const ScenarioEntry = ({
         <Button
           title="Remove Scenario"
           onPress={() => onRemove(index)}
-          color={Colors.accentRed} // Updated button color
+          color={Colors.accentRed}
         />
       )}
     </View>
@@ -153,16 +153,15 @@ function AddGameScreen({ navigation }) {
     allAspectsMap: {},
   });
 
-  // State for date picker visibility
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Initialize formData with new fields and their default values
   const [formData, setFormData] = useState({
     mobileGame: false,
     playtest: false,
-    gameDate: new Date(), // Default to today's date
-    islandHealthy: true, // Default to true
-    terrorLevel: 1, // Default to 1
+    gameDate: new Date(),
+    islandHealthy: true,
+    terrorLevel: 1,
     notes: '',
     difficulty: '',
     winLoss: null,
@@ -181,7 +180,7 @@ function AddGameScreen({ navigation }) {
     const ds = parseInt(formData.dahanPerSpirit || 0);
     const bs = parseInt(formData.blightPerSpirit || 0);
     return d + wl + ic + ds - bs;
-  }, [formData.difficulty, formData.invaderCards, formData.dahanPerSpirit, formData.blightPerSpirit, formData.winLoss]); // Added winLoss to dependencies
+  }, [formData.difficulty, formData.invaderCards, formData.dahanPerSpirit, formData.blightPerSpirit, formData.winLoss]);
 
   const fetchMasterData = useCallback(async () => {
     setLoading(true);
@@ -253,10 +252,9 @@ function AddGameScreen({ navigation }) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Date Picker Handlers
   const onChangeDate = (event, selectedDate) => {
     const currentDate = selectedDate || formData.gameDate;
-    setShowDatePicker(Platform.OS === 'ios'); // On iOS, picker stays open unless explicitly dismissed
+    setShowDatePicker(Platform.OS === 'ios');
     setFormData(prev => ({ ...prev, gameDate: currentDate }));
   };
 
@@ -521,11 +519,8 @@ function AddGameScreen({ navigation }) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      {/* Optional: Add ImageBackground here for specific screen background */}
-      {/* IMPORTANT: Replace './assets/backgrounds/add_game_bg.png' with your actual image path */}
-      {/* Or remove ImageBackground and set backgroundColor on the ScrollView */}
       <ImageBackground
-        source={require('../../assets/backgrounds/main_bg.png')} // Example background image
+        source={require('../../assets/backgrounds/main_bg.png')}
         style={styles.backgroundImage}
         resizeMode="cover"
       >
@@ -665,7 +660,7 @@ function AddGameScreen({ navigation }) {
             <Button title="Add Scenario" onPress={addScenarioEntry} color={Colors.accentGreen} />
         )}
 
-          {/* NEW SECTION TITLE ADDED HERE FOR SPACING */}
+          {/* Game Details Section */}
           <Text style={styles.sectionTitle}>Game Details:</Text>
 
           {/* Mobile Game Flag */}
@@ -696,7 +691,7 @@ function AddGameScreen({ navigation }) {
             <Switch
               value={formData.islandHealthy}
               onValueChange={(value) => handleFormChange('islandHealthy', value)}
-              trackColor={{ false: Colors.accentRed, true: Colors.accentGreen }} // Red for unhealthy, green for healthy
+              trackColor={{ false: Colors.accentRed, true: Colors.accentGreen }}
               thumbColor={formData.islandHealthy ? Colors.cardBackground : Colors.cardBackground}
             />
           </View>
@@ -733,16 +728,16 @@ function AddGameScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: { // Style for ImageBackground
+  backgroundImage: {
     flex: 1,
     width: '100%',
     height: '100%',
   },
   container: {
     padding: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)', // Semi-transparent card-like background
-    borderRadius: 15, // Softer edges for the main content area
-    margin: 10, // Add some margin from the edges of the ImageBackground
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 15,
+    margin: 10,
     paddingBottom: 50,
   },
   loadingContainer: {
@@ -752,22 +747,22 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryBackground,
   },
   title: {
-    fontSize: 28, // Slightly larger
+    fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-    color: Colors.primaryText, // Updated color
-    fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif', // Example: more organic font
+    color: Colors.primaryText,
+    fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif',
   },
   sectionTitle: {
-    fontSize: 22, // Slightly larger
+    fontSize: 22,
     fontWeight: '600',
     marginTop: 25,
     marginBottom: 15,
-    color: Colors.secondaryText, // Updated color
+    color: Colors.secondaryText,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderColorLight, // Softer border
-    paddingBottom: 8, // More padding
+    borderBottomColor: Colors.borderColorLight,
+    paddingBottom: 8,
     fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif',
   },
   row: {
@@ -775,12 +770,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 15,
-    backgroundColor: Colors.cardBackground, // Card background
-    padding: 12, // Increased padding
-    borderRadius: 10, // Softer edges
+    backgroundColor: Colors.cardBackground,
+    padding: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.borderColorLight, // Soft border
-    shadowColor: "#000", // Subtle shadow for depth
+    borderColor: Colors.borderColorLight,
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -791,20 +786,20 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    marginBottom: 5, // Reduced for tighter packing
+    marginBottom: 5,
     fontWeight: '500',
-    color: Colors.primaryText, // Updated color
+    color: Colors.primaryText,
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.borderColorMedium, // Softer border color
-    borderRadius: 10, // Softer edges
-    padding: 12, // Increased padding
+    borderColor: Colors.borderColorMedium,
+    borderRadius: 10,
+    padding: 12,
     marginBottom: 15,
     fontSize: 16,
-    backgroundColor: Colors.cardBackground, // Card background
-    color: Colors.primaryText, // Updated color
-    shadowColor: "#000", // Subtle shadow
+    backgroundColor: Colors.cardBackground,
+    color: Colors.primaryText,
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
@@ -815,16 +810,16 @@ const styles = StyleSheet.create({
   },
   textArea: {
     borderWidth: 1,
-    borderColor: Colors.borderColorMedium, // Softer border color
-    borderRadius: 10, // Softer edges
-    padding: 12, // Increased padding
+    borderColor: Colors.borderColorMedium,
+    borderRadius: 10,
+    padding: 12,
     marginBottom: 15,
     fontSize: 16,
-    minHeight: 120, // Taller text area
+    minHeight: 120,
     textAlignVertical: 'top',
-    backgroundColor: Colors.cardBackground, // Card background
-    color: Colors.primaryText, // Updated color
-    shadowColor: "#000", // Subtle shadow
+    backgroundColor: Colors.cardBackground,
+    color: Colors.primaryText,
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
@@ -834,20 +829,20 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   totalScore: {
-    fontSize: 20, // Slightly larger
+    fontSize: 20,
     fontWeight: 'bold',
     marginTop: 15,
     marginBottom: 25,
     textAlign: 'center',
-    color: Colors.accentGreen, // Updated color
+    color: Colors.accentGreen,
     fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif',
   },
   entryContainer: {
-    backgroundColor: Colors.cardBackground, // Card background
+    backgroundColor: Colors.cardBackground,
     padding: 15,
-    borderRadius: 10, // Softer edges
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.borderColorLight, // Soft border
+    borderColor: Colors.borderColorLight,
     marginBottom: 15,
     shadowColor: "#000",
     shadowOffset: {
@@ -862,13 +857,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginBottom: 5,
     fontWeight: '500',
-    color: Colors.primaryText, // Updated color
+    color: Colors.primaryText,
   },
   saveButtonContainer: {
     marginTop: 30,
     marginBottom: 20,
-    borderRadius: 10, // Apply border radius to the container to affect Button visual (Android only, iOS buttons are more transparent)
-    overflow: 'hidden', // Clip content to border radius for Android
+    borderRadius: 10,
+    overflow: 'hidden',
   }
 });
 
@@ -879,13 +874,13 @@ const pickerSelectStyles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: Colors.borderColorMedium, // Softer border
-    borderRadius: 10, // Softer edges
-    color: Colors.primaryText, // Updated color
+    borderColor: Colors.borderColorMedium,
+    borderRadius: 10,
+    color: Colors.primaryText,
     paddingRight: 30,
-    backgroundColor: Colors.cardBackground, // Card background
+    backgroundColor: Colors.cardBackground,
     marginBottom: 15,
-    shadowColor: "#000", // Subtle shadow
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
@@ -899,13 +894,13 @@ const pickerSelectStyles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: Colors.borderColorMedium, // Softer border
-    borderRadius: 10, // Softer edges
-    color: Colors.primaryText, // Updated color
+    borderColor: Colors.borderColorMedium,
+    borderRadius: 10,
+    color: Colors.primaryText,
     paddingRight: 30,
-    backgroundColor: Colors.cardBackground, // Card background
+    backgroundColor: Colors.cardBackground,
     marginBottom: 15,
-    shadowColor: "#000", // Subtle shadow
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
@@ -915,7 +910,7 @@ const pickerSelectStyles = StyleSheet.create({
     elevation: 2,
   },
   placeholder: {
-    color: Colors.secondaryText, // Updated color
+    color: Colors.secondaryText,
   },
 });
 

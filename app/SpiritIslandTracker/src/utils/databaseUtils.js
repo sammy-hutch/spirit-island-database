@@ -42,7 +42,7 @@ const parseCsvLine = (line) => {
       currentField += char;
     }
   }
-  values.push(currentField.trim()); // Add the last field
+  values.push(currentField.trim());
 
   return values;
 };
@@ -61,7 +61,7 @@ const fetchAndParseCsv = async (url) => {
   const csvString = await response.text();
   const rows = csvString.split('\n').map(row => row.trim()).filter(Boolean);
 
-  if (rows.length <= 1) { // Only headers or no data
+  if (rows.length <= 1) {
     console.warn(`No data or only headers found in CSV from ${url}.`);
     return { headers: [], data: [] };
   }
@@ -90,8 +90,8 @@ export const updateAllMasterData = async (databaseInstance, forceUpdate = false)
       const url = googleSheetUrls[type];
 
       let table = null;
-      let nullableIntegerFields = []; // Fields that should be NULL if empty
-      let isFactTable = false; // Flag to identify tables that should track `is_external`
+      let nullableIntegerFields = [];
+      let isFactTable = false;
 
       switch (type) {
         case "spirit":
@@ -130,7 +130,7 @@ export const updateAllMasterData = async (databaseInstance, forceUpdate = false)
         console.log(`Table '${table}' (dimension) already contains ${rowCount} rows. Skipping initial update for '${type}'.`);
         continue;
       }
-      // For fact tables (games_fact, events_fact) or if forceUpdate, we always proceed to update external records.
+      // For fact tables (games_fact, events_fact) or if forceUpdate, always proceed to update external records.
 
       console.log(`${forceUpdate ? "Force-updating" : (rowCount === 0 ? "Initial fetch for" : "Updating external")} ${type} data from: ${url}`);
 
@@ -141,9 +141,7 @@ export const updateAllMasterData = async (databaseInstance, forceUpdate = false)
         continue;
       }
 
-      // Delete existing records:
-      // For fact tables, only delete records marked as external. Local records are preserved.
-      // For dimension tables, delete all records and repopulate.
+      // Delete existing records
       const delete_statement = `DELETE FROM ${table};`;
       await databaseInstance.runAsync(delete_statement);
       console.log(`Deleted old ${isFactTable ? 'external ' : ''}'${type}' data.`);
@@ -162,13 +160,13 @@ export const updateAllMasterData = async (databaseInstance, forceUpdate = false)
           continue;
         }
 
-        // Process values, especially for nullable integer fields
+        // Process values
         const processedValues = rowValues.map((val, index) => {
           const header = headers[index];
           if (val === '' && nullableIntegerFields.includes(header)) {
-            return null; // Explicitly return null for empty values in specified integer columns
+            return null;
           }
-          return val; // Otherwise, keep the value as is
+          return val;
         });
 
         const finalColumnNames = [...headers, ...additionalColumns].join(', ');

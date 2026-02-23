@@ -17,7 +17,7 @@ import * as Sharing from 'expo-sharing';
 
 import { db } from '../../App';
 import Colors from '../constants/Colors';
-import { updateAllMasterData } from '../utils/databaseUtils'; // Ensure this import is correct
+import { updateAllMasterData } from '../utils/databaseUtils';
 
 // Helper function to generate CSV string from any array of objects
 const generateCsvFromObjects = (dataArray) => {
@@ -108,7 +108,7 @@ function SettingsScreen() {
   // State to hold combined game data when fetched for export
   const [combinedGameData, setCombinedGameData] = useState([]);
 
-  // Function to fetch combined game data for export (currently fetches ALL, adjust if needed for local-only combined export)
+  // Function to fetch combined game data for export
   const fetchCombinedGameDataForExport = async (localOnly = false) => {
     if (!db) {
       Alert.alert("Error", "Database not initialized. Please restart the app.");
@@ -127,10 +127,6 @@ function SettingsScreen() {
 
       const data = [];
       for (const game of games) {
-        // Events fact needs to be filtered by game_id and potentially is_external if you want
-        // to only show local events for a local game. For combined export, you typically
-        // want all associated events for the selected games.
-        // Assuming events associated with a local game are local events.
         const spirits = await db.getAllAsync(
           `SELECT
            sd.spirit_name,
@@ -171,7 +167,7 @@ function SettingsScreen() {
           scenarios,
         });
       }
-      setCombinedGameData(data); // Store the fetched data
+      setCombinedGameData(data);
       return data;
     } catch (error) {
       console.error("Error fetching combined game data for export:", error);
@@ -201,8 +197,6 @@ function SettingsScreen() {
             }
             setUpdatingMasterData(true);
             try {
-              // forceUpdate=true here ensures dimension tables are always updated,
-              // and fact tables delete and re-insert their external portion.
               await updateAllMasterData(db, true);
               Alert.alert("Success", "Master data updated from Google Sheets!");
             } catch (error) {
@@ -222,14 +216,13 @@ function SettingsScreen() {
     if (!db) { Alert.alert("Error", "Database not initialized."); return; }
     setCopyingRaw(true);
     try {
-      // Query only local records (is_external = 0)
       const result = await db.getAllAsync(`
        SELECT
          game_id,
          game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
          game_info, game_date, game_island_health, game_terror_level, game_mobile
        FROM games_fact
-       WHERE is_external = 0;`); // <-- ONLY LOCAL RECORDS
+       WHERE is_external = 0;`);
       if (result.length === 0) {
         Alert.alert("No Data", "No local games found in games_fact to copy.");
         return;
@@ -249,11 +242,10 @@ function SettingsScreen() {
     if (!db) { Alert.alert("Error", "Database not initialized."); return; }
     setCopyingRaw(true);
     try {
-      // Query only local records (is_external = 0)
       const result = await db.getAllAsync(`
        SELECT event_id, game_id, spirit_id, aspect_id, adversary_id, adversary_level, scenario_id
        FROM events_fact
-       WHERE is_external = 0;`); // <-- ONLY LOCAL RECORDS
+       WHERE is_external = 0;`);
       if (result.length === 0) {
         Alert.alert("No Data", "No local events found in events_fact to copy.");
         return;
@@ -269,15 +261,10 @@ function SettingsScreen() {
     }
   };
 
-  // The exportCombinedToCSV and copyCombinedToClipboard functions will now use the
-  // `fetchCombinedGameDataForExport(true)` to get only local records if desired.
-  // The existing functions used `fetchCombinedGameDataForExport()` which defaults to all records.
-  // I've updated the `fetchCombinedGameDataForExport` to accept a `localOnly` parameter.
   const exportCombinedToCSV = async (localOnly = false) => {
     setExportingCombinedCSV(true);
-    let dataToExport = combinedGameData; // This holds ALL data if previously fetched without localOnly flag
+    let dataToExport = combinedGameData;
 
-    // Refetch data specifically for localOnly export if needed, or if not yet loaded
     if (localOnly || dataToExport.length === 0) {
       dataToExport = await fetchCombinedGameDataForExport(localOnly);
       if (dataToExport.length === 0) {
@@ -370,7 +357,7 @@ function SettingsScreen() {
             <View style={styles.buttonWrapper}>
               <Button
                 title={exportingCombinedCSV ? "Exporting All..." : "Export All Games CSV"}
-                onPress={() => exportCombinedToCSV(false)} // Pass false for all records
+                onPress={() => exportCombinedToCSV(false)}
                 disabled={exportingCombinedCSV || loadingCombinedExportData || updatingMasterData || copyingRaw}
                 color={Colors.accentGreen}
               />
@@ -379,7 +366,7 @@ function SettingsScreen() {
             <View style={styles.buttonWrapper}>
               <Button
                 title={loadingCombinedExportData ? "Loading All Data..." : "Copy All Games CSV"}
-                onPress={() => copyCombinedToClipboard(false)} // Pass false for all records
+                onPress={() => copyCombinedToClipboard(false)}
                 disabled={loadingCombinedExportData || exportingCombinedCSV || updatingMasterData || copyingRaw}
                 color={Colors.accentGreen}
               />
@@ -396,18 +383,18 @@ function SettingsScreen() {
             <View style={styles.buttonWrapper}>
               <Button
                 title={exportingCombinedCSV ? "Exporting Local..." : "Export Local Games CSV"}
-                onPress={() => exportCombinedToCSV(true)} // Pass true for local-only records
+                onPress={() => exportCombinedToCSV(true)}
                 disabled={exportingCombinedCSV || loadingCombinedExportData || updatingMasterData || copyingRaw}
-                color={Colors.accentBlue} // A different color for local export
+                color={Colors.accentBlue}
               />
             </View>
             <View style={{ height: 10 }} />
             <View style={styles.buttonWrapper}>
               <Button
                 title={loadingCombinedExportData ? "Loading Local Data..." : "Copy Local Games CSV"}
-                onPress={() => copyCombinedToClipboard(true)} // Pass true for local-only records
+                onPress={() => copyCombinedToClipboard(true)}
                 disabled={loadingCombinedExportData || exportingCombinedCSV || updatingMasterData || copyingRaw}
-                color={Colors.accentBlue} // A different color for local export
+                color={Colors.accentBlue}
               />
             </View>
           </View>

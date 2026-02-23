@@ -24,7 +24,7 @@ General TODO:
 App TODO:
 - different backgrounds for each page
 - different backgrounds for win vs loss, blight vs healthy games - ADD default for when we don't know (old games)
-- tidy up code comments
+- app splash page in repo and build instructions
 
 Accolades TODO
 | done | nominee | name | accolade |

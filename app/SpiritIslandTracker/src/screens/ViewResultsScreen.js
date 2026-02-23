@@ -9,11 +9,11 @@ import {
   Button,
   Alert,
   Platform,
-  ImageBackground, // Ensure ImageBackground is imported
+  ImageBackground,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { db } from '../../App';
-import Colors from '../constants/Colors'; // Make sure this path is correct
+import Colors from '../constants/Colors';
 
 const GameItem = ({ game }) => {
   const formatBoolean = (value) => {
@@ -24,7 +24,6 @@ const GameItem = ({ game }) => {
   const formatWinLoss = (value) => (value === 10 ? 'Win' : 'Loss');
   const winColor = game.game_win === 10 ? Colors.accentGreen : Colors.accentRed;
 
-  // New logic for 4 conditions:
   const isWin = game.game_win === 10;
   const isHealthy = game.game_island_health === 1;
 
@@ -37,15 +36,12 @@ const GameItem = ({ game }) => {
       : require('../../assets/backgrounds/haunts_and_embers.png')); // Loss, Blighted
 
   return (
-    // Replaced View with ImageBackground
     <ImageBackground
       source={backgroundImageSource}
-      style={styles.gameItemContainer} // Common styles for the container (border, shadow, dimensions)
-      imageStyle={styles.gameItemImage} // Styles applied directly to the background image (e.g., opacity)
+      style={styles.gameItemContainer}
+      imageStyle={styles.gameItemImage}
       resizeMode="cover"
     >
-      {/* New wrapper for all content inside the ImageBackground */}
-      {/* This wrapper gets a semi-transparent background to ensure text readability */}
       <View style={styles.gameItemContentWrapper}>
         <Text style={styles.gameItemTitle}>
           Game: {game.game_id}
@@ -185,7 +181,7 @@ function ViewResultsScreen({ navigation }) {
     }, [fetchGameData])
   );
 
-  if (loading) { // Added loading state for the screen
+  if (loading) {
     return (
       <View style={styles.fullScreenLoadingContainer}>
         <ActivityIndicator size="large" color={Colors.accentGreen} />
@@ -228,7 +224,7 @@ function ViewResultsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  fullScreenLoadingContainer: { // New style for full screen loading
+  fullScreenLoadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -242,7 +238,7 @@ const styles = StyleSheet.create({
   screenContent: {
     flex: 1,
     padding: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Light translucent overlay for the whole screen content
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   centeredContainer: {
     flex: 1,
@@ -272,9 +268,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   gameItemContainer: {
-    // These styles are applied to the ImageBackground component
     borderRadius: 15,
-    // Note: padding is moved to gameItemContentWrapper to be part of the translucent area
     marginBottom: 12,
     borderWidth: 1,
     borderColor: Colors.borderColorLight,
@@ -283,18 +277,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 5,
-    overflow: 'hidden', // Crucial for borderRadius to clip the image
+    overflow: 'hidden',
   },
   gameItemImage: {
-    // Styles for the actual image within ImageBackground, if needed
-    // opacity: 0.6, // Example: make the background image itself slightly faded
   },
   gameItemContentWrapper: {
-    // This is the new View that wraps all text content
-    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Semi-transparent white background for text readability
-    padding: 18, // All padding for the card content goes here now
-    flex: 1, // Ensures it fills the ImageBackground area
-    // Match the borderRadius of the parent ImageBackground
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    padding: 18,
+    flex: 1,
     borderRadius: 15,
   },
   gameItemTitle: {
@@ -313,7 +303,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 5,
-    // Color set dynamically based on win/loss in GameItem component
   },
   gameSummary: {
     fontSize: 15,
