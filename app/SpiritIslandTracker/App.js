@@ -47,7 +47,8 @@ const initializeDatabase = async () => {
      game_island_health INTEGER,
      game_terror_level INTEGER,
      game_mobile INTEGER,
-     game_playtest INTEGER
+     game_playtest INTEGER,
+     is_external INTEGER DEFAULT 0
    );`,
       `CREATE TABLE IF NOT EXISTS events_fact (
      event_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,6 +58,7 @@ const initializeDatabase = async () => {
      adversary_id INTEGER,
      adversary_level INTEGER,
      scenario_id INTEGER,
+     is_external INTEGER DEFAULT 0,
      FOREIGN KEY (game_id) REFERENCES games_fact(game_id) ON DELETE CASCADE
    );`,
       `CREATE TABLE IF NOT EXISTS spirits_dim (

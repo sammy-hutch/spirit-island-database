@@ -8,8 +8,8 @@ import {
   Button,
   Alert,
   ScrollView,
-  ImageBackground, // Added ImageBackground
-  Platform, // Added Platform for font styles
+  ImageBackground,
+  Platform,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system';
@@ -17,9 +17,9 @@ import * as Sharing from 'expo-sharing';
 
 import { db } from '../../App';
 import Colors from '../constants/Colors';
-import { updateAllMasterData } from '../utils/databaseUtils';
+import { updateAllMasterData } from '../utils/databaseUtils'; // Ensure this import is correct
 
-// Helper function to generate CSV string from any array of objects (original)
+// Helper function to generate CSV string from any array of objects
 const generateCsvFromObjects = (dataArray) => {
   if (!dataArray || dataArray.length === 0) {
     return "";
@@ -45,7 +45,7 @@ const generateCsvFromObjects = (dataArray) => {
   return [headerRow, ...dataRows].join('\n');
 };
 
-// New function: Generates combined game CSV from the structured gameData
+// Generates combined game CSV from the structured gameData
 const generateCombinedGameCSV = (data) => {
   if (!data || data.length === 0) return "";
 
@@ -80,11 +80,11 @@ const generateCombinedGameCSV = (data) => {
     return [
       game.game_id,
       game.game_date,
-      game.game_mobile === 1 ? 'Yes' : 'No', // Format boolean
-      game.game_island_health === 1 ? 'Yes' : 'No', // Format boolean
+      game.game_mobile === 1 ? 'Yes' : 'No',
+      game.game_island_health === 1 ? 'Yes' : 'No',
       game.game_terror_level,
       game.game_difficulty,
-      game.game_win === 10 ? 'Win' : 'Loss', // Format win/loss
+      game.game_win === 10 ? 'Win' : 'Loss',
       game.game_cards,
       game.game_dahan,
       game.game_blight,
@@ -102,60 +102,65 @@ const generateCombinedGameCSV = (data) => {
 function SettingsScreen() {
   const [updatingMasterData, setUpdatingMasterData] = useState(false);
   const [copyingRaw, setCopyingRaw] = useState(false);
-  const [loadingCombinedExportData, setLoadingCombinedExportData] = useState(false); // New state
-  const [exportingCombinedCSV, setExportingCombinedCSV] = useState(false); // New state
+  const [loadingCombinedExportData, setLoadingCombinedExportData] = useState(false);
+  const [exportingCombinedCSV, setExportingCombinedCSV] = useState(false);
 
   // State to hold combined game data when fetched for export
   const [combinedGameData, setCombinedGameData] = useState([]);
 
-  // Function to fetch combined game data for export
-  const fetchCombinedGameDataForExport = async () => {
+  // Function to fetch combined game data for export (currently fetches ALL, adjust if needed for local-only combined export)
+  const fetchCombinedGameDataForExport = async (localOnly = false) => {
     if (!db) {
       Alert.alert("Error", "Database not initialized. Please restart the app.");
       return [];
     }
     setLoadingCombinedExportData(true);
     try {
+      const whereClause = localOnly ? "WHERE is_external = 0" : "";
       const games = await db.getAllAsync(
         `SELECT
-      game_id,
-      game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
-      game_info, game_date, game_island_health, game_terror_level, game_mobile
-    FROM games_fact ORDER BY game_id DESC;`
+         game_id,
+         game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
+         game_info, game_date, game_island_health, game_terror_level, game_mobile
+       FROM games_fact ${whereClause} ORDER BY game_id DESC;`
       );
 
       const data = [];
       for (const game of games) {
+        // Events fact needs to be filtered by game_id and potentially is_external if you want
+        // to only show local events for a local game. For combined export, you typically
+        // want all associated events for the selected games.
+        // Assuming events associated with a local game are local events.
         const spirits = await db.getAllAsync(
           `SELECT
-        sd.spirit_name,
-        ad.aspect_name
-      FROM events_fact e
-      LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
-      LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
-      WHERE e.game_id = ? AND e.spirit_id IS NOT NULL
-      GROUP BY sd.spirit_name, ad.aspect_name;`,
+           sd.spirit_name,
+           ad.aspect_name
+         FROM events_fact e
+         LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
+         LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
+         WHERE e.game_id = ? AND e.spirit_id IS NOT NULL ${localOnly ? "AND e.is_external = 0" : ""}
+         GROUP BY sd.spirit_name, ad.aspect_name;`,
           [game.game_id]
         );
 
         const adversaries = await db.getAllAsync(
           `SELECT
-        ad.adversary_name,
-        e.adversary_level
-      FROM events_fact e
-      LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
-      WHERE e.game_id = ? AND e.adversary_id IS NOT NULL
-      GROUP BY ad.adversary_name, e.adversary_level;`,
+           ad.adversary_name,
+           e.adversary_level
+         FROM events_fact e
+         LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
+         WHERE e.game_id = ? AND e.adversary_id IS NOT NULL ${localOnly ? "AND e.is_external = 0" : ""}
+         GROUP BY ad.adversary_name, e.adversary_level;`,
           [game.game_id]
         );
 
         const scenarios = await db.getAllAsync(
           `SELECT
-        sd.scenario_name
-      FROM events_fact e
-      LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
-      WHERE e.game_id = ? AND e.scenario_id IS NOT NULL
-      GROUP BY sd.scenario_name;`,
+           sd.scenario_name
+         FROM events_fact e
+         LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
+         WHERE e.game_id = ? AND e.scenario_id IS NOT NULL ${localOnly ? "AND e.is_external = 0" : ""}
+         GROUP BY sd.scenario_name;`,
           [game.game_id]
         );
 
@@ -177,11 +182,10 @@ function SettingsScreen() {
     }
   };
 
-  // Modified handler for updating master data
   const handleUpdateMasterData = () => {
     Alert.alert(
       "Confirm Master Data Update",
-      "Updating master data will overwrite all local data (including game entries) with data from Google Sheets. Are you sure you want to proceed?",
+      "Updating master data will update master lists (Spirits, Adversaries, etc.) and replace *external* game records with the latest from Google Sheets. Your *locally created* game records will be preserved. Are you sure you want to proceed?",
       [
         {
           text: "Cancel",
@@ -197,6 +201,8 @@ function SettingsScreen() {
             }
             setUpdatingMasterData(true);
             try {
+              // forceUpdate=true here ensures dimension tables are always updated,
+              // and fact tables delete and re-insert their external portion.
               await updateAllMasterData(db, true);
               Alert.alert("Success", "Master data updated from Google Sheets!");
             } catch (error) {
@@ -216,23 +222,24 @@ function SettingsScreen() {
     if (!db) { Alert.alert("Error", "Database not initialized."); return; }
     setCopyingRaw(true);
     try {
-      // Updated query to include all new columns
+      // Query only local records (is_external = 0)
       const result = await db.getAllAsync(`
-    SELECT
-      game_id,
-      game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
-      game_info, game_date, game_island_health, game_terror_level, game_mobile
-    FROM games_fact;`);
+       SELECT
+         game_id,
+         game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
+         game_info, game_date, game_island_health, game_terror_level, game_mobile
+       FROM games_fact
+       WHERE is_external = 0;`); // <-- ONLY LOCAL RECORDS
       if (result.length === 0) {
-        Alert.alert("No Data", "No games found in games_fact to copy.");
+        Alert.alert("No Data", "No local games found in games_fact to copy.");
         return;
       }
       const csvString = generateCsvFromObjects(result);
       await Clipboard.setStringAsync(csvString);
-      Alert.alert("Copied", "Raw games_fact data copied to clipboard.");
+      Alert.alert("Copied", "Local games_fact data copied to clipboard.");
     } catch (error) {
-      console.error("Error copying games_fact:", error);
-      Alert.alert("Error", `Failed to copy games_fact: ${error.message}`);
+      console.error("Error copying local games_fact:", error);
+      Alert.alert("Error", `Failed to copy local games_fact: ${error.message}`);
     } finally {
       setCopyingRaw(false);
     }
@@ -242,29 +249,39 @@ function SettingsScreen() {
     if (!db) { Alert.alert("Error", "Database not initialized."); return; }
     setCopyingRaw(true);
     try {
-      const result = await db.getAllAsync(`SELECT event_id, game_id, spirit_id, aspect_id, adversary_id, adversary_level, scenario_id FROM events_fact;`);
+      // Query only local records (is_external = 0)
+      const result = await db.getAllAsync(`
+       SELECT event_id, game_id, spirit_id, aspect_id, adversary_id, adversary_level, scenario_id
+       FROM events_fact
+       WHERE is_external = 0;`); // <-- ONLY LOCAL RECORDS
       if (result.length === 0) {
-        Alert.alert("No Data", "No events found in events_fact to copy.");
+        Alert.alert("No Data", "No local events found in events_fact to copy.");
         return;
       }
       const csvString = generateCsvFromObjects(result);
       await Clipboard.setStringAsync(csvString);
-      Alert.alert("Copied", "Raw events_fact data copied to clipboard.");
+      Alert.alert("Copied", "Local events_fact data copied to clipboard.");
     } catch (error) {
-      console.error("Error copying events_fact:", error);
-      Alert.alert("Error", `Failed to copy events_fact: ${error.message}`);
+      console.error("Error copying local events_fact:", error);
+      Alert.alert("Error", `Failed to copy local events_fact: ${error.message}`);
     } finally {
       setCopyingRaw(false);
     }
   };
 
-  const exportCombinedToCSV = async () => {
+  // The exportCombinedToCSV and copyCombinedToClipboard functions will now use the
+  // `fetchCombinedGameDataForExport(true)` to get only local records if desired.
+  // The existing functions used `fetchCombinedGameDataForExport()` which defaults to all records.
+  // I've updated the `fetchCombinedGameDataForExport` to accept a `localOnly` parameter.
+  const exportCombinedToCSV = async (localOnly = false) => {
     setExportingCombinedCSV(true);
-    let dataToExport = combinedGameData;
-    if (dataToExport.length === 0) {
-      dataToExport = await fetchCombinedGameDataForExport(); // Fetch if not already loaded
+    let dataToExport = combinedGameData; // This holds ALL data if previously fetched without localOnly flag
+
+    // Refetch data specifically for localOnly export if needed, or if not yet loaded
+    if (localOnly || dataToExport.length === 0) {
+      dataToExport = await fetchCombinedGameDataForExport(localOnly);
       if (dataToExport.length === 0) {
-        Alert.alert("No Data", "There are no game results to export.");
+        Alert.alert("No Data", `There are no ${localOnly ? "local" : "all"} game results to export.`);
         setExportingCombinedCSV(false);
         return;
       }
@@ -272,7 +289,7 @@ function SettingsScreen() {
 
     try {
       const csvString = generateCombinedGameCSV(dataToExport);
-      const filename = `SpiritIslandResults_${Date.now()}.csv`;
+      const filename = `SpiritIslandResults_${localOnly ? "Local_" : ""}${Date.now()}.csv`;
       const fileUri = FileSystem.cacheDirectory + filename;
 
       await FileSystem.writeAsStringAsync(fileUri, csvString, { encoding: FileSystem.EncodingType.UTF8 });
@@ -285,7 +302,7 @@ function SettingsScreen() {
 
       await Sharing.shareAsync(fileUri, {
         mimeType: 'text/csv',
-        dialogTitle: 'Share Spirit Island Results CSV',
+        dialogTitle: `Share Spirit Island ${localOnly ? "Local " : ""}Results CSV`,
         UTI: 'public.comma-separated-values'
       });
       Alert.alert("Export Successful", "CSV file exported and shared.");
@@ -297,22 +314,23 @@ function SettingsScreen() {
     }
   };
 
-  const copyCombinedToClipboard = async () => {
-    setLoadingCombinedExportData(true); // Indicate loading while fetching data
+  const copyCombinedToClipboard = async (localOnly = false) => {
+    setLoadingCombinedExportData(true);
     let dataToCopy = combinedGameData;
-    if (dataToCopy.length === 0) {
-      dataToCopy = await fetchCombinedGameDataForExport(); // Fetch if not already loaded
+
+    if (localOnly || dataToCopy.length === 0) {
+      dataToCopy = await fetchCombinedGameDataForExport(localOnly);
       if (dataToCopy.length === 0) {
-        Alert.alert("No Data", "There are no game results to copy.");
+        Alert.alert("No Data", `There are no ${localOnly ? "local" : "all"} game results to copy.`);
         setLoadingCombinedExportData(false);
         return;
       }
     }
-    setLoadingCombinedExportData(false); // Done loading data
+    setLoadingCombinedExportData(false);
     try {
       const csvString = generateCombinedGameCSV(dataToCopy);
       await Clipboard.setStringAsync(csvString);
-      Alert.alert("Copied to Clipboard", "Combined game results copied as CSV to clipboard.");
+      Alert.alert("Copied to Clipboard", `Combined ${localOnly ? "local " : ""}game results copied as CSV to clipboard.`);
     } catch (error) {
       console.error("Error copying combined data to clipboard:", error);
       Alert.alert("Copy Failed", `Could not copy combined data to clipboard: ${error.message}`);
@@ -321,7 +339,7 @@ function SettingsScreen() {
 
   return (
     <ImageBackground
-      source={require('../../assets/backgrounds/main_bg.png')} // Example background image
+      source={require('../../assets/backgrounds/main_bg.png')}
       style={styles.backgroundImage}
       resizeMode="cover"
     >
@@ -331,65 +349,91 @@ function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Master Data Update</Text>
           <Text style={styles.sectionDescription}>
-            Pull the latest Spirits, Aspects, Adversaries, and Scenarios from your Google Sheets.
+            Pull the latest Spirits, Aspects, Adversaries, and Scenarios from your Google Sheets. This will also update external game records, preserving your local games.
           </Text>
           <View style={styles.buttonWrapper}>
             <Button
               title={updatingMasterData ? "Updating..." : "Update All Master Data"}
               onPress={handleUpdateMasterData}
               disabled={updatingMasterData || copyingRaw || loadingCombinedExportData || exportingCombinedCSV}
-              color={Colors.accentBrown} // Updated button color
+              color={Colors.accentBrown}
             />
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Export Game Data</Text>
+          <Text style={styles.sectionTitle}>Export All Game Data</Text>
           <Text style={styles.sectionDescription}>
-            Export all recorded game results.
+            Export all recorded game results (local and external).
           </Text>
           <View style={styles.buttonGroup}>
             <View style={styles.buttonWrapper}>
               <Button
-                title={exportingCombinedCSV ? "Exporting..." : "Export All Games CSV"}
-                onPress={exportCombinedToCSV}
+                title={exportingCombinedCSV ? "Exporting All..." : "Export All Games CSV"}
+                onPress={() => exportCombinedToCSV(false)} // Pass false for all records
                 disabled={exportingCombinedCSV || loadingCombinedExportData || updatingMasterData || copyingRaw}
-                color={Colors.accentGreen} // Updated button color
+                color={Colors.accentGreen}
               />
             </View>
             <View style={{ height: 10 }} />
             <View style={styles.buttonWrapper}>
               <Button
-                title={loadingCombinedExportData ? "Loading Data..." : "Copy All Games CSV"}
-                onPress={copyCombinedToClipboard}
+                title={loadingCombinedExportData ? "Loading All Data..." : "Copy All Games CSV"}
+                onPress={() => copyCombinedToClipboard(false)} // Pass false for all records
                 disabled={loadingCombinedExportData || exportingCombinedCSV || updatingMasterData || copyingRaw}
-                color={Colors.accentGreen} // Updated button color
+                color={Colors.accentGreen}
               />
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Export Raw Table Data</Text>
+          <Text style={styles.sectionTitle}>Export Local-Only Game Data</Text>
           <Text style={styles.sectionDescription}>
-            Copy raw table data (games_fact and events_fact) to your clipboard as CSV.
+            Export only the game results you have added locally within this app.
           </Text>
           <View style={styles.buttonGroup}>
             <View style={styles.buttonWrapper}>
               <Button
-                title={copyingRaw ? "Copying..." : "Copy games_fact CSV"}
-                onPress={copyGamesFactToClipboard}
-                disabled={copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV}
-                color={Colors.borderColorDark} // Updated button color
+                title={exportingCombinedCSV ? "Exporting Local..." : "Export Local Games CSV"}
+                onPress={() => exportCombinedToCSV(true)} // Pass true for local-only records
+                disabled={exportingCombinedCSV || loadingCombinedExportData || updatingMasterData || copyingRaw}
+                color={Colors.accentBlue} // A different color for local export
               />
             </View>
             <View style={{ height: 10 }} />
             <View style={styles.buttonWrapper}>
               <Button
-                title={copyingRaw ? "Copying..." : "Copy events_fact CSV"}
+                title={loadingCombinedExportData ? "Loading Local Data..." : "Copy Local Games CSV"}
+                onPress={() => copyCombinedToClipboard(true)} // Pass true for local-only records
+                disabled={loadingCombinedExportData || exportingCombinedCSV || updatingMasterData || copyingRaw}
+                color={Colors.accentBlue} // A different color for local export
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Export Raw Local Table Data</Text>
+          <Text style={styles.sectionDescription}>
+            Copy raw local table data (games_fact and events_fact) to your clipboard as CSV.
+          </Text>
+          <View style={styles.buttonGroup}>
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={copyingRaw ? "Copying..." : "Copy local games_fact CSV"}
+                onPress={copyGamesFactToClipboard}
+                disabled={copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV}
+                color={Colors.borderColorDark}
+              />
+            </View>
+            <View style={{ height: 10 }} />
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={copyingRaw ? "Copying..." : "Copy local events_fact CSV"}
                 onPress={copyEventsFactToClipboard}
                 disabled={copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV}
-                color={Colors.borderColorDark} // Updated button color
+                color={Colors.borderColorDark}
               />
             </View>
           </View>
@@ -415,7 +459,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)', // Semi-transparent card-like background
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderRadius: 15,
     margin: 10,
   },
@@ -424,17 +468,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',
-    color: Colors.primaryText, // Updated color
+    color: Colors.primaryText,
     fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif',
   },
   section: {
-    backgroundColor: Colors.cardBackground, // Card background
-    borderRadius: 15, // Softer edges
-    padding: 18, // More padding
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 15,
+    padding: 18,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: Colors.borderColorLight, // Soft border
-    shadowColor: "#000", // Stronger shadow for "floating" effect
+    borderColor: Colors.borderColorLight,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
@@ -444,35 +488,35 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: Colors.primaryText, // Updated color
+    color: Colors.primaryText,
     fontFamily: Platform.OS === 'ios' ? 'Gill Sans' : 'serif',
   },
   sectionDescription: {
     fontSize: 14,
-    color: Colors.secondaryText, // Updated color
+    color: Colors.secondaryText,
     marginBottom: 15,
   },
   buttonGroup: {
     flexDirection: 'column',
     marginTop: 10,
   },
-  buttonWrapper: { // Added wrapper for consistent button styling
+  buttonWrapper: {
     borderRadius: 10,
-    overflow: 'hidden', // Clips the native button background to the border radius
-    marginVertical: 5, // Spacing between buttons
+    overflow: 'hidden',
+    marginVertical: 5,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)', // Lighter overlay
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
-    borderRadius: 15, // Match container border radius
+    borderRadius: 15,
   },
   overlayText: {
     marginTop: 10,
     fontSize: 16,
-    color: Colors.primaryText, // Updated color
+    color: Colors.primaryText,
   }
 });
 
