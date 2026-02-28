@@ -1,11 +1,11 @@
-# spirit-island-database
+# 🏞️ spirit-island-database 👻
 tools for managing a database of spirit island games
 
-## Overview
+## 🗺️ Overview
 This project aims to compile a set of tools for managing a database of results for the boardgame Spirit Island. This is an unofficial project, all materials belong to Greater Than Games, LLC.
 
 Currently operational tools:
-- none
+- [Spirit Island Game Tracker app](/docs/products/SpiritIslandGameTracker.md)
 
 
 Tools currently in development:
@@ -22,11 +22,11 @@ Tools scoped for future development:
 | Data export tool (de_tool) | Selection of export services to export data from the database/virtual machine environment, e.g. export to Google Sheets or local excel file | Python, ?? |
 
 
-### Project Vision
+### 👀 Project Vision
 The end result is a complete suite of tools to handle the input and modelling of data for Spirit Island game scores. This data is then fed to a dashboard external from this project which displays the results.
 
-## Documentation
-- [Spirit Island Game Scores](/docs/spirit_island_game_scores.md)
-- [Software Setup](/docs/software_setup.md)
-- [Project Setup](/docs/project_setup.md)
-- [Models](/docs/models.md)
+## 📜 Documentation
+- [Spirit Island Game Scores](/docs/dev/spirit_island_game_scores.md)
+- [Software Setup](/docs/dev/software_setup.md)
+- [Project Setup](/docs/dev/project_setup.md)
+- [Models](/docs/dev/models.md)

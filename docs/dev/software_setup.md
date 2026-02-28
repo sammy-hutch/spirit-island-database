@@ -124,3 +124,51 @@ steps copied from [this page](https://sqlitebrowser.org/dl/)
 - Run ```sudo apt-get update```
 - Run ```sudo apt-get install sqlitebrowser```
 - You can open DB Browser for SQLite in Ubuntu with the following command: ```sqlitebrowser```
+
+
+## App Setup
+
+Install npm
+```bash
+...
+```
+
+Install expo-cli
+```bash
+npm install -g expo-cli create-expo-app
+npx expo install react-native-screens react-native-safe-area-context
+npm install @react-navigation/native @react-navigation/native-stack
+npx expo install expo-sqlite
+```
+
+Install requirements from package.json
+```bash
+npm install
+```
+
+## Testing app
+navigate to directory
+```bash
+cd app/SpiritIslandTracker
+```
+
+run the app on phone-accessible public connection tunnel (if on laptop with firewall limitations)
+```bash
+npm start -- --tunnel
+```
+
+run the app on local network for easier debugging and activity tracking via web interface (on laptop without firewall issues)
+```bash
+npm start
+```
+
+open expo go app on phone and scan qr code in terminal
+
+
+## Building app
+
+production profile in eas.json set to build app as a ```.apk``` file that can be installed locally on android device
+```bash
+eas build --platform android --profile production
+```
+
