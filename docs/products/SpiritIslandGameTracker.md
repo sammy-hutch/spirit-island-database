@@ -1,8 +1,9 @@
 # Spirit Island Game Tracker App
 
 ## Gallery
-
-![Add Game Screen](/docs/images/AddGameScreen.jpg) ![View Results Screen](/docs/images/ViewResultsScreen.jpg) ![Settings Screen](/docs/images/SettingsScreen.jpg)
+<img src="../docs/images/AddGameScreen.jpg" alt="Add Game Screen" width="30%">
+<img src="../docs/images/ViewResultsScreen.jpg" alt="View Results Screen" width="30%">
+<img src="../docs/images/SettingsScreen.jpg" alt="Settings Screen" width="30%">
 
 ## Functionality
 
