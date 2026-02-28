@@ -126,7 +126,7 @@ steps copied from [this page](https://sqlitebrowser.org/dl/)
 - You can open DB Browser for SQLite in Ubuntu with the following command: ```sqlitebrowser```
 
 
-## app setup
+## App Setup
 
 Install npm
 ```bash
@@ -162,6 +162,13 @@ run the app on local network for easier debugging and activity tracking via web 
 npm start
 ```
 
-
 open expo go app on phone and scan qr code in terminal
+
+
+## Building app
+
+production profile in eas.json set to build app as a ```.apk``` file that can be installed locally on android device
+```bash
+eas build --platform android --profile production
+```
 
