@@ -1,6 +1,6 @@
 // App.js
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, ActivityIndicator, ImageBackground } from "react-native"; // Added ImageBackground
+import { StyleSheet, Text, View, ActivityIndicator, ImageBackground } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
@@ -10,20 +10,15 @@ import {
 
 import * as SQLite from "expo-sqlite";
 
-// Import screen components
 import AddGameScreen from "./src/screens/AddGameScreen";
 import ViewResultsScreen from "./src/screens/ViewResultsScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 
-// Import the new utility for master data update
 import { updateAllMasterData } from "./src/utils/databaseUtils";
-
-// Import Colors from its dedicated file
-import Colors from './src/constants/Colors'; // <--- UPDATED IMPORT
+import Colors from './src/constants/Colors';
 
 const Tab = createBottomTabNavigator();
 
-// Declare db globally but assign it after opening async
 let db = null;
 
 const initializeDatabase = async () => {
@@ -104,7 +99,6 @@ const initializeDatabase = async () => {
   }
 };
 
-// AppContent component
 function AppContent() {
   const [dbInitialized, setDbInitialized] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Initializing database...");
@@ -115,9 +109,8 @@ function AppContent() {
     const setupDatabaseAndData = async () => {
       try {
         await initializeDatabase();
-        setLoadingMessage("Checking for master data updates..."); // Refined message
-        // Call without forceUpdate, so it only updates if tables are empty
-        await updateAllMasterData(db, false); // Explicitly pass false, or omit for default
+        setLoadingMessage("Checking for master data updates...");
+        await updateAllMasterData(db, false);
         setLoadingMessage("Application data loaded!");
         setDbInitialized(true);
       } catch (e) {
@@ -147,13 +140,10 @@ function AppContent() {
   }
 
   return (
-    // Wrapped NavigationContainer in ImageBackground
-    // IMPORTANT: Replace './assets/backgrounds/main_bg.png' with your actual image path
-    // If you don't have a background image, you can remove ImageBackground and set backgroundColor in styles.container
     <ImageBackground
-      source={require('./assets/backgrounds/main_bg.png')} // Example background image
+      source={require('./assets/backgrounds/main_bg.png')}
       style={styles.backgroundImage}
-      resizeMode="cover" // or 'repeat', 'stretch'
+      resizeMode="cover"
     >
       <NavigationContainer>
         <Tab.Navigator
@@ -164,33 +154,33 @@ function AppContent() {
             headerTitleStyle: {
               fontWeight: "bold",
               fontSize: 20,
-              color: Colors.headerTitle, // Updated color
+              color: Colors.headerTitle,
             },
             headerStyle: {
-              backgroundColor: Colors.headerBackground, // Updated header background
+              backgroundColor: Colors.headerBackground,
             },
             headerTitleAlign: 'center',
             tabBarIcon: ({ focused, color, size }) => {
               let iconName;
               if (route.name === "AddGameTab") {
-                iconName = focused ? "🌱" : "🌿"; // Organic symbols
+                iconName = focused ? "🌱" : "🌿";
               } else if (route.name === "ViewResultsTab") {
-                iconName = focused ? "🏞️" : "🌲"; // Organic symbols
+                iconName = focused ? "🏞️" : "🌲";
               } else if (route.name === "SettingsTab") {
-                iconName = focused ? "⚙️" : "⚙️"; // Settings gear, kept as is but will inherit color
+                iconName = focused ? "⚙️" : "⚙️";
               }
-              return <Text style={{ color, fontSize: size + 2 }}>{iconName}</Text>; // Slightly larger for emojis
+              return <Text style={{ color, fontSize: size + 2 }}>{iconName}</Text>;
             },
-            tabBarActiveTintColor: Colors.activeTintColor, // Updated color
-            tabBarInactiveTintColor: Colors.inactiveTintColor, // Updated color
+            tabBarActiveTintColor: Colors.activeTintColor,
+            tabBarInactiveTintColor: Colors.inactiveTintColor,
             tabBarStyle: {
               height: 60 + insets.bottom,
               paddingBottom: insets.bottom,
-              backgroundColor: Colors.secondaryBackground, // Earthy background for tab bar
+              backgroundColor: Colors.secondaryBackground,
               borderTopWidth: 1,
-              borderTopColor: Colors.borderColorLight, // Soft border
+              borderTopColor: Colors.borderColorLight,
             },
-            tabBarLabelStyle: { fontSize: 12, fontWeight: '500' }, // Added weight
+            tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
           })}
         >
           <Tab.Screen
@@ -229,15 +219,14 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: { // New style for ImageBackground
+  backgroundImage: {
     flex: 1,
     width: '100%',
     height: '100%',
   },
-  // container is no longer directly styling the main background due to ImageBackground
   container: {
     flex: 1,
-    backgroundColor: 'transparent', // Make sure it's transparent if using ImageBackground
+    backgroundColor: 'transparent',
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
@@ -246,26 +235,26 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.primaryBackground, // Updated background
+    backgroundColor: Colors.primaryBackground,
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.accentRed, // Updated background for error
+    backgroundColor: Colors.accentRed,
     padding: 20,
   },
   errorText: {
-    color: Colors.cardBackground, // Light text on dark error background
+    color: Colors.cardBackground,
     fontSize: 18,
     textAlign: "center",
   },
-  title: { // This style is for the loading screen title, not the header title
+  title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
-    color: Colors.primaryText, // Updated color
+    color: Colors.primaryText,
   },
 });
 
-export { db, Colors }; // Export Colors for use in other screens
+export { db };

@@ -181,7 +181,7 @@ function SettingsScreen() {
   const handleUpdateMasterData = () => {
     Alert.alert(
       "Confirm Master Data Update",
-      "Updating master data will update master lists (Spirits, Adversaries, etc.) and replace *external* game records with the latest from Google Sheets. Your *locally created* game records will be preserved. Are you sure you want to proceed?",
+      "Updating master data will update all local data with external, overwriting saved games data. Are you sure you want to proceed?",
       [
         {
           text: "Cancel",
@@ -224,15 +224,15 @@ function SettingsScreen() {
        FROM games_fact
        WHERE is_external = 0;`);
       if (result.length === 0) {
-        Alert.alert("No Data", "No local games found in games_fact to copy.");
+        Alert.alert("No Data", "No local games data found to copy.");
         return;
       }
       const csvString = generateCsvFromObjects(result);
       await Clipboard.setStringAsync(csvString);
-      Alert.alert("Copied", "Local games_fact data copied to clipboard.");
+      Alert.alert("Copied", "Local games data copied to clipboard.");
     } catch (error) {
-      console.error("Error copying local games_fact:", error);
-      Alert.alert("Error", `Failed to copy local games_fact: ${error.message}`);
+      console.error("Error copying local games data:", error);
+      Alert.alert("Error", `Failed to copy local games data: ${error.message}`);
     } finally {
       setCopyingRaw(false);
     }
@@ -247,15 +247,15 @@ function SettingsScreen() {
        FROM events_fact
        WHERE is_external = 0;`);
       if (result.length === 0) {
-        Alert.alert("No Data", "No local events found in events_fact to copy.");
+        Alert.alert("No Data", "No local events data found to copy.");
         return;
       }
       const csvString = generateCsvFromObjects(result);
       await Clipboard.setStringAsync(csvString);
-      Alert.alert("Copied", "Local events_fact data copied to clipboard.");
+      Alert.alert("Copied", "Local events data copied to clipboard.");
     } catch (error) {
-      console.error("Error copying local events_fact:", error);
-      Alert.alert("Error", `Failed to copy local events_fact: ${error.message}`);
+      console.error("Error copying local events data:", error);
+      Alert.alert("Error", `Failed to copy local events data: ${error.message}`);
     } finally {
       setCopyingRaw(false);
     }
@@ -336,7 +336,7 @@ function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Master Data Update</Text>
           <Text style={styles.sectionDescription}>
-            Pull the latest Spirits, Aspects, Adversaries, and Scenarios from your Google Sheets. This will also update external game records, preserving your local games.
+            Pull data from your Google Sheets.
           </Text>
           <View style={styles.buttonWrapper}>
             <Button
@@ -345,6 +345,32 @@ function SettingsScreen() {
               disabled={updatingMasterData || copyingRaw || loadingCombinedExportData || exportingCombinedCSV}
               color={Colors.accentBrown}
             />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Export Raw Local Table Data</Text>
+          <Text style={styles.sectionDescription}>
+            Copy raw local table data (games and events) to your clipboard as CSV.
+          </Text>
+          <View style={styles.buttonGroup}>
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={copyingRaw ? "Copying..." : "Copy local games_fact CSV"}
+                onPress={copyGamesFactToClipboard}
+                disabled={copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV}
+                color={Colors.borderColorDark}
+              />
+            </View>
+            <View style={{ height: 10 }} />
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={copyingRaw ? "Copying..." : "Copy local events_fact CSV"}
+                onPress={copyEventsFactToClipboard}
+                disabled={copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV}
+                color={Colors.borderColorDark}
+              />
+            </View>
           </View>
         </View>
 
@@ -395,32 +421,6 @@ function SettingsScreen() {
                 onPress={() => copyCombinedToClipboard(true)}
                 disabled={loadingCombinedExportData || exportingCombinedCSV || updatingMasterData || copyingRaw}
                 color={Colors.accentBlue}
-              />
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Export Raw Local Table Data</Text>
-          <Text style={styles.sectionDescription}>
-            Copy raw local table data (games_fact and events_fact) to your clipboard as CSV.
-          </Text>
-          <View style={styles.buttonGroup}>
-            <View style={styles.buttonWrapper}>
-              <Button
-                title={copyingRaw ? "Copying..." : "Copy local games_fact CSV"}
-                onPress={copyGamesFactToClipboard}
-                disabled={copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV}
-                color={Colors.borderColorDark}
-              />
-            </View>
-            <View style={{ height: 10 }} />
-            <View style={styles.buttonWrapper}>
-              <Button
-                title={copyingRaw ? "Copying..." : "Copy local events_fact CSV"}
-                onPress={copyEventsFactToClipboard}
-                disabled={copyingRaw || updatingMasterData || loadingCombinedExportData || exportingCombinedCSV}
-                color={Colors.borderColorDark}
               />
             </View>
           </View>
