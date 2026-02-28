@@ -1,9 +1,11 @@
 # Spirit Island Game Tracker App
 
 ## Gallery
-<img src="../images/AddGameScreen.jpg" alt="Add Game Screen" width="30%">
-<img src="../images/ViewResultsScreen.jpg" alt="View Results Screen" width="30%">
-<img src="../images/SettingsScreen.jpg" alt="Settings Screen" width="30%">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 15px; margin-bottom: 20px;">
+<img src="../images/AddGameScreen.jpg" alt="Add Game Screen" style="width: 30%; max-width: 300px; height: auto; border: 1px solid #ddd; border-radius: 5px;">
+<img src="../images/ViewResultsScreen.jpg" alt="View Results Screen" style="width: 30%; max-width: 300px; height: auto; border: 1px solid #ddd; border-radius: 5px;">
+<img src="../images/SettingsScreen.jpg" alt="Settings Screen" style="width: 30%; max-width: 300px; height: auto; border: 1px solid #ddd; border-radius: 5px;">
+</div>
 
 ## Functionality
 
