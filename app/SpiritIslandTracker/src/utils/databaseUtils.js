@@ -72,12 +72,112 @@ const fetchAndParseCsv = async (url) => {
 };
 
 /**
-* Updates master data tables from Google Sheets.
+* Checks if critical dimension tables (spirits, adversaries, scenarios) have any data.
+* This helps determine if an initial online load is necessary or if the app can rely on existing local data.
 * @param {object} databaseInstance The Expo-SQLite database instance.
-* @param {boolean} forceUpdate If true, updates regardless of existing data. If false, only updates dimension tables if they are empty. Fact tables (games_fact, events_fact) will always update their external records.
+* @returns {Promise<boolean>} True if at least one critical dimension table has data, false otherwise.
+*/
+export const checkDimensionTablesPopulated = async (databaseInstance) => {
+  try {
+    const criticalTables = ["spirits_dim", "adversaries_dim", "scenarios_dim"];
+    for (const table of criticalTables) {
+      const countResult = await databaseInstance.getFirstAsync(`SELECT COUNT(*) as count FROM ${table};`);
+      if (countResult?.count > 0) {
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.error("Error checking dimension tables population:", error);
+    return false;
+  }
+};
+
+/**
+* Attempts to populate dimension tables (spirits, adversaries, scenarios, aspects) from online sources.
+* This function is designed for initial startup when tables are empty and should handle network failures gracefully.
+* Fact tables (games_fact, events_fact) are NOT updated by this function, as they can be empty initially.
+* @param {object} databaseInstance The Expo-SQLite database instance.
+* @returns {Promise<void>} Resolves if successful (even if some data could not be fetched due to network), rejects if a database error occurs.
+*/
+export const initialPopulateDimensionTables = async (databaseInstance) => {
+  if (!databaseInstance) {
+    console.error("Database instance not provided for initial dimension data populate.");
+    throw new Error("Database not initialized.");
+  }
+
+  const dimensionTablesToPopulate = {
+    spirit: "spirits_dim",
+    adversary: "adversaries_dim",
+    scenario: "scenarios_dim",
+    aspect: "aspects_dim",
+  };
+
+  try {
+    await databaseInstance.execAsync('BEGIN TRANSACTION;');
+
+    for (const type in dimensionTablesToPopulate) {
+      const table = dimensionTablesToPopulate[type];
+      const url = googleSheetUrls[type];
+
+      try {
+        console.log(`Attempting initial fetch for ${type} data from: ${url}`);
+        const { headers, data: dataRows } = await fetchAndParseCsv(url);
+
+        if (dataRows.length === 0) {
+          console.warn(`No data found in CSV for ${type} during initial populate. Skipping.`);
+          continue;
+        }
+
+        await databaseInstance.runAsync(`DELETE FROM ${table};`);
+        console.log(`Cleared old data from '${table}' before initial insert.`);
+
+        let nullableIntegerFields = [];
+
+        for (const rowValues of dataRows) {
+          if (rowValues.length !== headers.length) {
+            console.warn(`Skipping row due to column count mismatch for ${type}: "${rowValues.join(',')}". Expected ${headers.length}, got ${rowValues.length}.`);
+            continue;
+          }
+
+          const processedValues = rowValues.map((val, index) => {
+            const header = headers[index];
+            if (val === '' && nullableIntegerFields.includes(header)) {
+              return null;
+            }
+            return val;
+          });
+
+          const finalColumnNames = headers.join(', ');
+          const placeholders = processedValues.map(() => '?').join(', ');
+          const insert_statement = `INSERT OR IGNORE INTO ${table} (${finalColumnNames}) VALUES (${placeholders});`;
+
+          await databaseInstance.runAsync(insert_statement, processedValues);
+        }
+        console.log(`Inserted ${dataRows.length} initial '${type}' records.`);
+
+      } catch (networkError) {
+        console.warn(`Could not fetch or parse data for ${type} from online source during initial load. Skipping this table. Error:`, networkError.message);
+      }
+    }
+
+    await databaseInstance.execAsync('COMMIT;');
+    console.log("Initial dimension data population process completed (network errors gracefully handled).");
+  } catch (dbError) {
+    await databaseInstance.execAsync('ROLLBACK;');
+    console.error("Error during initial dimension data population (ROLLBACK issued):", dbError);
+    throw dbError;
+  }
+};
+
+/**
+* Updates master data tables from Google Sheets.
+* This function performs a full update (deleting existing and re-inserting) for all specified tables.
+* It is intended for manual, user-triggered updates.
+* @param {object} databaseInstance The Expo-SQLite database instance.
 * @returns {Promise<boolean>} True if successful, throws an error otherwise.
 */
-export const updateAllMasterData = async (databaseInstance, forceUpdate = false) => {
+export const updateAllMasterData = async (databaseInstance) => {
   if (!databaseInstance) {
     console.error("Database instance not provided for master data update.");
     throw new Error("Database not initialized.");
@@ -121,18 +221,7 @@ export const updateAllMasterData = async (databaseInstance, forceUpdate = false)
           continue;
       }
 
-      // Check if the table is already populated (only relevant for dimension tables without forceUpdate)
-      const countResult = await databaseInstance.getFirstAsync(`SELECT COUNT(*) as count FROM ${table};`);
-      const rowCount = countResult?.count || 0;
-
-      // For dimension tables, skip if not forceUpdate and already has data
-      if (!forceUpdate && !isFactTable && rowCount > 0) {
-        console.log(`Table '${table}' (dimension) already contains ${rowCount} rows. Skipping initial update for '${type}'.`);
-        continue;
-      }
-      // For fact tables (games_fact, events_fact) or if forceUpdate, always proceed to update external records.
-
-      console.log(`${forceUpdate ? "Force-updating" : (rowCount === 0 ? "Initial fetch for" : "Updating external")} ${type} data from: ${url}`);
+      console.log(`Updating ${isFactTable ? "external" : ""} ${type} data from: ${url}`);
 
       const { headers, data: dataRows } = await fetchAndParseCsv(url);
 
@@ -144,7 +233,7 @@ export const updateAllMasterData = async (databaseInstance, forceUpdate = false)
       // Delete existing records
       const delete_statement = `DELETE FROM ${table};`;
       await databaseInstance.runAsync(delete_statement);
-      console.log(`Deleted old ${isFactTable ? 'external ' : ''}'${type}' data.`);
+      console.log(`Deleted old '${type}' data.`);
 
       // Prepare for insertion
       let additionalColumns = [];

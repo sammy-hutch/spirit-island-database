@@ -1,5 +1,5 @@
 // src/screens/AddGameScreen.js
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useContext } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import RNPickerSelect from 'react-native-picker-select';
 import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import { db } from '../../App';
+import { AppContext } from '../../App';
 import Colors from '../constants/Colors';
 
 const SpiritEntry = ({
@@ -145,6 +145,7 @@ const ScenarioEntry = ({
 };
 
 function AddGameScreen({ navigation }) {
+  const { db } = useContext(AppContext);
   const [loading, setLoading] = useState(true);
   const [masterData, setMasterData] = useState({
     spiritOptions: [],
@@ -176,7 +177,8 @@ function AddGameScreen({ navigation }) {
   const totalScore = useCallback(() => {
     const d = parseInt(formData.difficulty || 0);
     const wl = formData.winLoss === 'Win' ? 10 : 0;
-    const ic = formData.winLoss === 'Win' ? parseInt(formData.invaderCards || 0) * 2 : parseInt(formData.invaderCards || 0) * 1;
+    const ic = parseInt(formData.invaderCards || 0);
+    // const ic = formData.winLoss === 'Win' ? parseInt(formData.invaderCards || 0) * 2 : parseInt(formData.invaderCards || 0) * 1; -- old calc, if wanting to add the actual number of cards, use this
     const ds = parseInt(formData.dahanPerSpirit || 0);
     const bs = parseInt(formData.blightPerSpirit || 0);
     return d + wl + ic + ds - bs;
@@ -239,7 +241,7 @@ function AddGameScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [db]);
 
   useFocusEffect(
     useCallback(() => {
@@ -428,9 +430,9 @@ function AddGameScreen({ navigation }) {
 
       const gameInsertResult = await db.runAsync(
         `INSERT INTO games_fact (
-        game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
-        game_info, game_date, game_island_health, game_terror_level, game_mobile, game_playtest
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score, 
+      game_info, game_date, game_island_health, game_terror_level, game_mobile, game_playtest
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
           parseInt(formData.difficulty || 0),
           game_score,
@@ -622,7 +624,7 @@ function AddGameScreen({ navigation }) {
           ))}
           {formData.spirits.length < 6 && (
             <Button title="Add Another Spirit" onPress={addSpiritEntry} color={Colors.accentGreen} />
-        )}
+          )}
 
           {/* Adversaries Section */}
           <Text style={styles.sectionTitle}>Adversaries ({formData.adversaries.length} selected):</Text>
@@ -641,7 +643,7 @@ function AddGameScreen({ navigation }) {
           ))}
           {formData.adversaries.length < 2 && (
             <Button title="Add Adversary" onPress={addAdversaryEntry} color={Colors.accentGreen} />
-        )}
+          )}
 
           {/* Scenarios Section */}
           <Text style={styles.sectionTitle}>Scenarios ({formData.scenarios.length} selected):</Text>
@@ -658,7 +660,7 @@ function AddGameScreen({ navigation }) {
           ))}
           {formData.scenarios.length < 2 && (
             <Button title="Add Scenario" onPress={addScenarioEntry} color={Colors.accentGreen} />
-        )}
+          )}
 
           {/* Game Details Section */}
           <Text style={styles.sectionTitle}>Game Details:</Text>

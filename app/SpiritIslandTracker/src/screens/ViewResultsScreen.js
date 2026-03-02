@@ -1,5 +1,5 @@
 // src/screens/ViewResultsScreen.js
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useContext } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { db } from '../../App';
+import { AppContext } from '../../App';
 import Colors from '../constants/Colors';
 
 const GameItem = ({ game }) => {
@@ -103,6 +103,7 @@ const GameItem = ({ game }) => {
 };
 
 function ViewResultsScreen({ navigation }) {
+  const { db } = useContext(AppContext);
   const [loading, setLoading] = useState(true);
   const [gameData, setGameData] = useState([]);
 
@@ -172,7 +173,7 @@ function ViewResultsScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [db]);
 
   useFocusEffect(
     useCallback(() => {
