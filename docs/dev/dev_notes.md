@@ -21,10 +21,6 @@ General TODO:
 - [ ] docstrings
 - [ ] incorportate mobile game flag, game date flag, blight card flag, terror level counter into dashboard and database
 
-App TODO:
-- different backgrounds for each page
-- different backgrounds for win vs loss, blight vs healthy games - ADD default for when we don't know (old games)
-
 Accolades TODO
 | done | nominee | name | accolade |
 | ---- | ------- | ---- | -------- |

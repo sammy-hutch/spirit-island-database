@@ -217,7 +217,7 @@ function SettingsScreen() {
      SELECT
        game_id,
        game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
-       game_info, game_date, game_island_health, game_terror_level, game_mobile
+       game_info, game_date, game_island_health, game_terror_level, game_mobile, game_playtest
      FROM games_fact
      WHERE is_external = 0;`);
       if (result.length === 0) {
@@ -323,7 +323,7 @@ function SettingsScreen() {
 
   return (
     <ImageBackground
-      source={require('../../assets/backgrounds/main_bg.png')}
+      source={require('../../assets/backgrounds/mountains.png')}
       style={styles.backgroundImage}
       resizeMode="cover"
     >

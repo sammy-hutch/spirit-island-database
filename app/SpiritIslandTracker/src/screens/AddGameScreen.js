@@ -522,7 +522,7 @@ function AddGameScreen({ navigation }) {
       style={{ flex: 1 }}
     >
       <ImageBackground
-        source={require('../../assets/backgrounds/main_bg.png')}
+        source={require('../../assets/backgrounds/jungle.png')}
         style={styles.backgroundImage}
         resizeMode="cover"
       >

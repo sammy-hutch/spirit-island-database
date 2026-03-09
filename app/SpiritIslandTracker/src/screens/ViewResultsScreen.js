@@ -27,13 +27,19 @@ const GameItem = ({ game }) => {
   const isWin = game.game_win === 10;
   const isHealthy = game.game_island_health === 1;
 
-  const backgroundImageSource = isWin
-    ? (isHealthy
-      ? require('../../assets/backgrounds/enticing_splendor.png')    // Win, Healthy
-      : require('../../assets/backgrounds/drought.png'))  // Win, Blighted
-    : (isHealthy
-      ? require('../../assets/backgrounds/drift_down.png')    // Loss, Healthy
-      : require('../../assets/backgrounds/haunts_and_embers.png')); // Loss, Blighted
+  let backgroundImageSource;
+
+  if (isWin && isHealthy) {
+    backgroundImageSource = require('../../assets/backgrounds/enticing_splendor.png');
+  } else if (isWin && !isHealthy) {
+    backgroundImageSource = require('../../assets/backgrounds/drought.png');
+  } else if (!isWin && isHealthy) {
+    backgroundImageSource = require('../../assets/backgrounds/drift_down.png');
+  } else if (!isWin && !isHealthy) {
+    backgroundImageSource = require('../../assets/backgrounds/haunts_and_embers.png');
+  } else {
+    backgroundImageSource = require('../../assets/backgrounds/sands.png');
+  }
 
   return (
     <ImageBackground
@@ -193,7 +199,7 @@ function ViewResultsScreen({ navigation }) {
 
   return (
     <ImageBackground
-      source={require('../../assets/backgrounds/main_bg.png')}
+      source={require('../../assets/backgrounds/wetlands.png')}
       style={styles.backgroundImage}
       resizeMode="cover"
     >
