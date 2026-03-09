@@ -1,5 +1,5 @@
 // src/screens/SettingsScreen.js
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -15,9 +15,8 @@ import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
-import { db } from '../../App';
+import { AppContext } from '../../App';
 import Colors from '../constants/Colors';
-import { updateAllMasterData } from '../utils/databaseUtils';
 
 // Helper function to generate CSV string from any array of objects
 const generateCsvFromObjects = (dataArray) => {
@@ -100,6 +99,8 @@ const generateCombinedGameCSV = (data) => {
 };
 
 function SettingsScreen() {
+  const { db, updateMasterData } = useContext(AppContext);
+
   const [updatingMasterData, setUpdatingMasterData] = useState(false);
   const [copyingRaw, setCopyingRaw] = useState(false);
   const [loadingCombinedExportData, setLoadingCombinedExportData] = useState(false);
@@ -119,44 +120,44 @@ function SettingsScreen() {
       const whereClause = localOnly ? "WHERE is_external = 0" : "";
       const games = await db.getAllAsync(
         `SELECT
-         game_id,
-         game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
-         game_info, game_date, game_island_health, game_terror_level, game_mobile
-       FROM games_fact ${whereClause} ORDER BY game_id DESC;`
+       game_id,
+       game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
+       game_info, game_date, game_island_health, game_terror_level, game_mobile
+     FROM games_fact ${whereClause} ORDER BY game_id DESC;`
       );
 
       const data = [];
       for (const game of games) {
         const spirits = await db.getAllAsync(
           `SELECT
-           sd.spirit_name,
-           ad.aspect_name
-         FROM events_fact e
-         LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
-         LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
-         WHERE e.game_id = ? AND e.spirit_id IS NOT NULL ${localOnly ? "AND e.is_external = 0" : ""}
-         GROUP BY sd.spirit_name, ad.aspect_name;`,
+         sd.spirit_name,
+         ad.aspect_name
+       FROM events_fact e
+       LEFT JOIN spirits_dim sd ON e.spirit_id = sd.spirit_id
+       LEFT JOIN aspects_dim ad ON e.aspect_id = ad.aspect_id
+       WHERE e.game_id = ? AND e.spirit_id IS NOT NULL ${localOnly ? "AND e.is_external = 0" : ""}
+       GROUP BY sd.spirit_name, ad.aspect_name;`,
           [game.game_id]
         );
 
         const adversaries = await db.getAllAsync(
           `SELECT
-           ad.adversary_name,
-           e.adversary_level
-         FROM events_fact e
-         LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
-         WHERE e.game_id = ? AND e.adversary_id IS NOT NULL ${localOnly ? "AND e.is_external = 0" : ""}
-         GROUP BY ad.adversary_name, e.adversary_level;`,
+         ad.adversary_name,
+         e.adversary_level
+       FROM events_fact e
+       LEFT JOIN adversaries_dim ad ON e.adversary_id = ad.adversary_id
+       WHERE e.game_id = ? AND e.adversary_id IS NOT NULL ${localOnly ? "AND e.is_external = 0" : ""}
+       GROUP BY ad.adversary_name, e.adversary_level;`,
           [game.game_id]
         );
 
         const scenarios = await db.getAllAsync(
           `SELECT
-           sd.scenario_name
-         FROM events_fact e
-         LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
-         WHERE e.game_id = ? AND e.scenario_id IS NOT NULL ${localOnly ? "AND e.is_external = 0" : ""}
-         GROUP BY sd.scenario_name;`,
+         sd.scenario_name
+       FROM events_fact e
+       LEFT JOIN scenarios_dim sd ON e.scenario_id = sd.scenario_id
+       WHERE e.game_id = ? AND e.scenario_id IS NOT NULL ${localOnly ? "AND e.is_external = 0" : ""}
+       GROUP BY sd.scenario_name;`,
           [game.game_id]
         );
 
@@ -178,7 +179,7 @@ function SettingsScreen() {
     }
   };
 
-  const handleUpdateMasterData = () => {
+  const handleUpdatePress = () => {
     Alert.alert(
       "Confirm Master Data Update",
       "Updating master data will update all local data with external, overwriting saved games data. Are you sure you want to proceed?",
@@ -197,11 +198,7 @@ function SettingsScreen() {
             }
             setUpdatingMasterData(true);
             try {
-              await updateAllMasterData(db, true);
-              Alert.alert("Success", "Master data updated from Google Sheets!");
-            } catch (error) {
-              console.error("Error updating master data:", error);
-              Alert.alert("Update Failed", `Failed to update master data: ${error.message}`);
+              await updateMasterData();
             } finally {
               setUpdatingMasterData(false);
             }
@@ -217,12 +214,12 @@ function SettingsScreen() {
     setCopyingRaw(true);
     try {
       const result = await db.getAllAsync(`
-       SELECT
-         game_id,
-         game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
-         game_info, game_date, game_island_health, game_terror_level, game_mobile
-       FROM games_fact
-       WHERE is_external = 0;`);
+     SELECT
+       game_id,
+       game_difficulty, game_win, game_cards, game_dahan, game_blight, game_score,
+       game_info, game_date, game_island_health, game_terror_level, game_mobile, game_playtest
+     FROM games_fact
+     WHERE is_external = 0;`);
       if (result.length === 0) {
         Alert.alert("No Data", "No local games data found to copy.");
         return;
@@ -243,9 +240,9 @@ function SettingsScreen() {
     setCopyingRaw(true);
     try {
       const result = await db.getAllAsync(`
-       SELECT event_id, game_id, spirit_id, aspect_id, adversary_id, adversary_level, scenario_id
-       FROM events_fact
-       WHERE is_external = 0;`);
+     SELECT event_id, game_id, spirit_id, aspect_id, adversary_id, adversary_level, scenario_id
+     FROM events_fact
+     WHERE is_external = 0;`);
       if (result.length === 0) {
         Alert.alert("No Data", "No local events data found to copy.");
         return;
@@ -326,7 +323,7 @@ function SettingsScreen() {
 
   return (
     <ImageBackground
-      source={require('../../assets/backgrounds/main_bg.png')}
+      source={require('../../assets/backgrounds/mountains.png')}
       style={styles.backgroundImage}
       resizeMode="cover"
     >
@@ -341,7 +338,7 @@ function SettingsScreen() {
           <View style={styles.buttonWrapper}>
             <Button
               title={updatingMasterData ? "Updating..." : "Update All Master Data"}
-              onPress={handleUpdateMasterData}
+              onPress={handleUpdatePress}
               disabled={updatingMasterData || copyingRaw || loadingCombinedExportData || exportingCombinedCSV}
               color={Colors.accentBrown}
             />
